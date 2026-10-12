@@ -1,0 +1,127 @@
+import { useEffect, useState } from 'react'
+import api from './api.js'
+
+function formatDate(value) {
+  return value ? new Date(value).toLocaleDateString() : '—'
+}
+
+export default function RequestQueueTable({ title = 'Requests', perPage = 20, showFilters = false }) {
+  const [requests, setRequests] = useState([])
+  const [page, setPage] = useState(1)
+  const [lastPage, setLastPage] = useState(1)
+  const [filters, setFilters] = useState({ search: '', status: '', priority: '' })
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [updatingId, setUpdatingId] = useState(null)
+
+  useEffect(() => {
+    let active = true
+    setIsLoading(true)
+    const timer = window.setTimeout(() => {
+      const params = { page, per_page: perPage }
+      Object.entries(filters).forEach(([key, value]) => {
+        if (showFilters && value) params[key] = value
+      })
+
+      api.get('/requests', { params })
+        .then(({ data }) => {
+          if (!active) return
+          setRequests(data.data || [])
+          setLastPage(data.last_page || 1)
+          setError('')
+        })
+        .catch(() => {
+          if (active) setError('Could not load requests. Please refresh to try again.')
+        })
+        .finally(() => {
+          if (active) setIsLoading(false)
+        })
+    }, showFilters ? 200 : 0)
+
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [page, perPage, filters, showFilters])
+
+  async function updateStatus(requestId, status) {
+    setUpdatingId(requestId)
+    setError('')
+    try {
+      const { data } = await api.patch(`/requests/${requestId}`, { status })
+      setRequests((current) => current.map((item) => item.id === requestId ? data.request : item))
+    } catch {
+      setError('Could not update the request status. Please try again.')
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  function setFilter(key, value) {
+    setFilters((current) => ({ ...current, [key]: value }))
+    setPage(1)
+  }
+
+  return (
+    <section className="admin-panel admin-panel--table">
+      <div className="admin-panel-heading"><h3>{title}</h3></div>
+      {showFilters && (
+        <div className="request-queue-filters">
+          <input aria-label="Search request title or ID" type="search" placeholder="Search title or ID" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} />
+          <select aria-label="Filter by status" value={filters.status} onChange={(event) => setFilter('status', event.target.value)}>
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="in_progress">In progress</option>
+            <option value="completed">Completed</option>
+          </select>
+          <select aria-label="Filter by priority" value={filters.priority} onChange={(event) => setFilter('priority', event.target.value)}>
+            <option value="">All priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      )}
+      {error && <p className="admin-request-error" role="alert">{error}</p>}
+      <div className="admin-table-scroll">
+        <table className="admin-table admin-request-table">
+          <thead><tr><th>Request</th><th>Student</th><th>Category</th><th>Location</th><th>Priority</th><th>Status</th><th>Submitted</th></tr></thead>
+          <tbody>
+            {!isLoading && requests.length === 0 && <tr><td colSpan="7" className="admin-request-empty">No requests match your filters.</td></tr>}
+            {requests.map((request) => (
+              <tr key={request.id}>
+                <td><strong>#{request.id} · {request.title}</strong><small className="admin-request-description">{request.description}</small></td>
+                <td>{request.user?.name || 'Student'}<small className="admin-request-description">{request.user?.email || ''}</small></td>
+                <td>{request.category}</td>
+                <td>{request.building}, {request.room}</td>
+                <td><span className={`priority-label priority-label--${request.priority}`}>{request.priority}</span></td>
+                <td>
+                  <select
+                    aria-label={`Update status for ${request.title}`}
+                    className="admin-role-select"
+                    disabled={updatingId === request.id}
+                    value={request.status}
+                    onChange={(event) => updateStatus(request.id, event.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </td>
+                <td>{formatDate(request.created_at)}</td>
+              </tr>
+            ))}
+            {isLoading && <tr><td colSpan="7" className="admin-request-empty">Loading requests…</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {lastPage > 1 && (
+        <div className="admin-pagination">
+          <button className="admin-button admin-button--secondary" type="button" disabled={page <= 1 || isLoading} onClick={() => setPage((current) => current - 1)}>Previous</button>
+          <span>Page {page} of {lastPage}</span>
+          <button className="admin-button admin-button--secondary" type="button" disabled={page >= lastPage || isLoading} onClick={() => setPage((current) => current + 1)}>Next</button>
+        </div>
+      )}
+    </section>
+  )
+}

@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "name": "CampusFix",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/vendor": true,
+      "**/node_modules": true,
+      "**/dist": true
+    }
+  }
+}
