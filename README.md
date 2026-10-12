@@ -1,53 +1,52 @@
 # CampusFix
 
-CampusFix is split into a Laravel API backend and a React frontend.
+CampusFix is a campus maintenance request and monitoring system designed to help students and staff report damaged or malfunctioning campus facilities and monitor repair progress.
 
-## Folders
+## Technologies Used
 
-- `backend/` - Laravel 12 application, API, migrations, and tests.
-- `frontend/` - React 19 and Vite application.
-- `CampusFix.code-workspace` - VS Code workspace for the complete project.
+- **Frontend:** React, Vite, JavaScript
+- **Backend:** Laravel, PHP
+- **Database:** MySQL
 
-See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for the file map.
+## Project Structure
 
-## Setup
+- `backend/` — Laravel backend application and API
+- `frontend/` — React frontend application
 
-Install PHP/Composer dependencies from `backend/`:
+## Features
 
-```text
-cd backend
+- User registration and login
+- Maintenance request management
+- Request status tracking
+- Dashboard for monitoring requests
+
+## Development Setup
+
+### Backend
+
+Open a terminal in the `backend/` directory and install the PHP dependencies:
+
+```bash
 composer install
 ```
 
-If this is a fresh setup, copy `backend/.env.example` to `backend/.env`, configure the database, then run:
+Configure your local environment using `.env.example`, then configure your database.
 
-```text
-php artisan key:generate
-php artisan migrate
-php artisan storage:link
+Start the Laravel development server:
+
+```bash
+php artisan serve
 ```
 
-Install frontend dependencies from the project root:
+### Frontend
 
-```text
-npm --prefix frontend install
+Open a terminal in the `frontend/` directory and run:
+
+```bash
+npm install
+npm run dev
 ```
 
-## Development
+## Security
 
-From the project root:
-
-```text
-npm run dev:all
-```
-
-This starts the API at `http://127.0.0.1:8000` and Vite at `http://127.0.0.1:5173`.
-
-You can also start them separately with `npm run dev:api` and `npm run dev`.
-
-## Checks
-
-```text
-npm run build
-npm test
-```
+Do not commit `.env` files, passwords, API keys, or other sensitive credentials.
