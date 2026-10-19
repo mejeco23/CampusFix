@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\MaintenanceRequest;
+use App\Models\Building;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MaintenanceRequestController extends Controller
 {
@@ -93,11 +95,13 @@ class MaintenanceRequestController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $buildingId = Building::where('name', $request->input('building'))->value('id');
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
-            'category' => ['required', 'in:Electrical,Plumbing,Furniture,IT Equipment,Cleaning,Other'],
-            'building' => ['required', 'string', 'max:120'],
-            'room' => ['required', 'string', 'max:80'],
+            'category' => ['required', 'string', 'exists:categories,name'],
+            'building' => ['required', 'string', Rule::exists('buildings', 'name')],
+            'room' => ['required', 'string', Rule::exists('rooms', 'room_number')->where('building_id', $buildingId)],
             'priority' => ['required', 'in:low,medium,high'],
             'description' => ['required', 'string', 'max:5000'],
             'photo' => ['nullable', 'image', 'max:5120'],

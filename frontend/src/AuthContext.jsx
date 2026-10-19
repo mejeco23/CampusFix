@@ -68,12 +68,19 @@ export function AuthProvider({ children }) {
   }
 
   async function register(details) {
-    return authenticate('/register', details)
+    const { data } = await api.post('/register', details)
+    return data
   }
 
   async function updateProfile(details) {
     const isFormData = typeof FormData !== 'undefined' && details instanceof FormData
-    const { data } = await api.patch('/user', details, isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {})
+    let data
+    if (isFormData) {
+      details.append('_method', 'PATCH')
+      ;({ data } = await api.post('/user', details))
+    } else {
+      ;({ data } = await api.patch('/user', details))
+    }
     setUser(data)
     localStorage.setItem('campusfix_user', JSON.stringify(data))
     return data

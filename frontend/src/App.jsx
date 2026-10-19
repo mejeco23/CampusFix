@@ -3,6 +3,8 @@ import Dashboard from './Dashboard.jsx'
 import Login from './Login.jsx'
 import Profile from './Profile.jsx'
 import Register from './Register.jsx'
+import ForgotPassword from './ForgotPassword.jsx'
+import ResetPassword from './ResetPassword.jsx'
 import RequestForm from './RequestForm.jsx'
 import Requests from './Requests.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
@@ -13,6 +15,9 @@ function App() {
   const { user, isLoading, logout } = useAuth()
   const path = window.location.pathname
   const isRegisterPage = path === '/register'
+
+  if (path === '/reset-password') return <ResetPassword />
+  if (path === '/forgot-password') return <ForgotPassword />
 
   if (isLoading) return <main className="loading-screen" aria-label="Loading CampusFix"><span className="loading-mark">CF</span></main>
 

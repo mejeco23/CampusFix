@@ -28,6 +28,7 @@ class SuperAdminSeeder extends Seeder
         $user = User::firstOrNew(['email' => $email]);
         $user->name = $name;
         $user->role = 'admin';
+        $user->email_verified_at ??= now();
 
         if (! $user->exists) {
             $user->password = Hash::make($password);

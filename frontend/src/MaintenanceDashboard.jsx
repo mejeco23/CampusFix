@@ -89,7 +89,9 @@ function MaintenanceOverview({ user, setView }) {
 }
 
 export default function MaintenanceDashboard({ user, logout }) {
-  const [view, setView] = useState('dashboard')
+  const [view, setView] = useState(() => {
+    return new URLSearchParams(window.location.search).get('view') === 'requests' ? 'requests' : 'dashboard'
+  })
 
   return (
     <div className="admin-shell">

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import api from './api.js'
 import RequestQueueTable from './RequestQueueTable.jsx'
+import AdminManagement from './AdminManagement.jsx'
 
 function Icon({ name }) {
   const paths = {
@@ -14,19 +15,6 @@ function Icon({ name }) {
 
   return <svg className="admin-icon" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>
 }
-
-const userRows = [
-  { name: 'Demo Student', email: 'student@campusfix.test', role: 'Student', status: 'Active' },
-  { name: 'Staff A', email: 'staff@campusfix.test', role: 'Maintenance', status: 'Active' },
-  { name: 'Admin', email: 'admin@campusfix.test', role: 'Admin', status: 'Active' },
-]
-
-const buildings = [
-  { name: 'Building A', rooms: '101, 204', action: 'Edit' },
-  { name: 'Engineering Bldg', rooms: '105, 204', action: 'Edit' },
-  { name: 'Library', rooms: '201', action: 'Edit' },
-  { name: 'Main Building', rooms: '302', action: 'Edit' },
-]
 
 function AdminSidebar({ active, setView, user, logout }) {
   const items = [
@@ -67,12 +55,6 @@ function AdminSidebar({ active, setView, user, logout }) {
 }
 
 function UsersFacilitiesView() {
-  const [keyword, setKeyword] = useState('')
-  const filteredRows = useMemo(() => {
-    if (!keyword.trim()) return userRows
-    return userRows.filter((row) => `${row.name} ${row.email}`.toLowerCase().includes(keyword.toLowerCase()))
-  }, [keyword])
-
   return (
     <div className="admin-content admin-content--wide">
       <div className="admin-header-row">
@@ -81,80 +63,8 @@ function UsersFacilitiesView() {
           <p>Manage accounts, roles, and the campus locations used in request forms</p>
         </div>
       </div>
-
-      <section className="admin-panel admin-panel--table">
-        <div className="admin-table-header">
-          <div className="admin-search">
-            <Icon name="search" />
-            <input type="text" aria-label="Search name or email" value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Search name or email" />
-          </div>
-          <button type="button" className="admin-button admin-button--primary"><span>＋</span> Add user</button>
-        </div>
-
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.map((row) => (
-              <tr key={row.email}>
-                <td>{row.name}</td>
-                <td>{row.email}</td>
-                <td>
-                  <select defaultValue={row.role.toLowerCase()} className="admin-role-select">
-                    <option value="student">Student</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-                <td><span className="admin-status-pill">{row.status}</span></td>
-                <td><button type="button" className="admin-link-button">Edit</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section className="admin-panel admin-panel--table admin-panel--locations">
-        <div className="admin-panel-heading">
-          <h3>Campus locations</h3>
-          <div className="admin-segmented-buttons">
-            <button type="button" className="admin-segment active">Buildings &amp; rooms</button>
-            <button type="button" className="admin-segment">Categories</button>
-          </div>
-        </div>
-
-        <table className="admin-table admin-table--locations">
-          <thead>
-            <tr>
-              <th>Building</th>
-              <th>Rooms</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {buildings.map((item) => (
-              <tr key={item.name}>
-                <td>{item.name}</td>
-                <td>{item.rooms}</td>
-                <td><button type="button" className="admin-link-button">Edit</button> + <button type="button" className="admin-link-button">Room</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <button type="button" className="admin-button admin-button--primary admin-button--add-row"><span>＋</span> Add building</button>
-      </section>
-
-      <div className="admin-note">
-        Admin-only. Deleting a building or room that has requests should be blocked, because maintenance_requests references rooms.
-      </div>
+      <AdminManagement view="users" />
+      <AdminManagement view="facilities" />
     </div>
   )
 }
@@ -174,16 +84,34 @@ function ReviewAndAssignView() {
 }
 
 function DashboardOverviewView() {
+  const [period, setPeriod] = useState('semester')
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
-    api.get('/dashboard')
+    api.get('/admin/dashboard', { params: { period } })
       .then(({ data: response }) => { if (active) setData(response) })
       .catch(() => { if (active) setError('Could not load request totals. Refresh to try again.') })
     return () => { active = false }
-  }, [])
+  }, [period])
+
+  async function exportReport() {
+    setError('')
+    try {
+      const response = await api.get('/admin/requests/export', { params: { period }, responseType: 'blob' })
+      const url = URL.createObjectURL(response.data)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `campusfix-requests-${period}.csv`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('Could not export the report. Please try again.')
+    }
+  }
 
   const stats = data?.stats || {}
   const completionRate = stats.total ? Math.round((stats.completed / stats.total) * 100) : 0
@@ -196,8 +124,14 @@ function DashboardOverviewView() {
           <p>Campus-wide maintenance performance and recurring problems</p>
         </div>
         <div className="admin-header-actions">
-          <button type="button" className="admin-button admin-button--secondary">This semester</button>
-          <button type="button" className="admin-button admin-button--secondary">Export report</button>
+          <label className="visually-hidden" htmlFor="admin-report-period">Reporting period</label>
+          <select id="admin-report-period" className="admin-button admin-button--secondary" value={period} onChange={(event) => setPeriod(event.target.value)}>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="semester">This semester</option>
+            <option value="all">All time</option>
+          </select>
+          <button type="button" className="admin-button admin-button--secondary" onClick={exportReport}>Export report</button>
         </div>
       </div>
 
@@ -244,7 +178,10 @@ function DashboardOverviewView() {
 }
 
 export default function AdminDashboard({ user, logout }) {
-  const [view, setView] = useState('dashboard')
+  const [view, setView] = useState(() => {
+    const requestedView = new URLSearchParams(window.location.search).get('view')
+    return ['dashboard', 'review', 'users'].includes(requestedView) ? requestedView : 'dashboard'
+  })
 
   return (
     <div className="admin-shell">

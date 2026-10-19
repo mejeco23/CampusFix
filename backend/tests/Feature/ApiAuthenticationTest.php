@@ -3,17 +3,23 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class ApiAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_issues_a_token_that_can_access_the_user_endpoint(): void
+    public function test_registration_creates_an_account_that_can_log_in_separately(): void
     {
+        Notification::fake();
+
         $registration = $this->postJson('/api/register', [
             'name' => 'Campus Student',
             'email' => 'student@example.test',
@@ -23,14 +29,40 @@ class ApiAuthenticationTest extends TestCase
 
         $registration->assertCreated()
             ->assertJsonPath('user.name', 'Campus Student')
-            ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email']]);
+            ->assertJsonPath('message', 'Account created. Check your email for the verification link before logging in.')
+            ->assertJsonStructure(['user' => ['id', 'name', 'email']])
+            ->assertJsonMissingPath('token');
 
-        $this->withToken($registration->json('token'))
+        $user = User::where('email', 'student@example.test')->firstOrFail();
+        Notification::assertSentTo($user, VerifyEmail::class);
+        $this->getJson('/api/user')->assertUnauthorized();
+
+        $this->postJson('/api/login', [
+            'email' => 'student@example.test',
+            'password' => 'campus-pass-123',
+        ])->assertForbidden()->assertJsonPath('code', 'email_not_verified');
+
+        $verificationUrl = URL::temporarySignedRoute('verification.verify', now()->addHour(), [
+            'id' => $user->id,
+            'hash' => sha1($user->getEmailForVerification()),
+        ]);
+
+        $this->get($verificationUrl)->assertRedirect('http://127.0.0.1:5173/login?verified=1');
+        $this->assertNotNull($user->fresh()->email_verified_at);
+
+        $login = $this->postJson('/api/login', [
+            'email' => 'student@example.test',
+            'password' => 'campus-pass-123',
+        ]);
+
+        $login->assertOk()->assertJsonStructure(['token', 'user' => ['id', 'name', 'email']]);
+
+        $this->withToken($login->json('token'))
             ->getJson('/api/user')
             ->assertOk()
             ->assertJsonPath('email', 'student@example.test');
 
-        $this->withToken($registration->json('token'))
+        $this->withToken($login->json('token'))
             ->patchJson('/api/user', [
                 'name' => 'Campus Student Updated',
                 'email' => 'student.updated@example.test',
@@ -44,14 +76,21 @@ class ApiAuthenticationTest extends TestCase
     {
         Storage::fake('public');
 
-        $registration = $this->postJson('/api/register', [
+        $this->postJson('/api/register', [
             'name' => 'Campus Student',
             'email' => 'student@example.test',
             'password' => 'campus-pass-123',
             'password_confirmation' => 'campus-pass-123',
         ]);
 
-        $response = $this->withToken($registration->json('token'))
+        User::where('email', 'student@example.test')->update(['email_verified_at' => now()]);
+
+        $login = $this->postJson('/api/login', [
+            'email' => 'student@example.test',
+            'password' => 'campus-pass-123',
+        ]);
+
+        $response = $this->withToken($login->json('token'))
             ->patchJson('/api/user', [
                 'name' => 'Campus Student',
                 'email' => 'student@example.test',
@@ -77,6 +116,7 @@ class ApiAuthenticationTest extends TestCase
             ]);
 
             $registration->assertCreated()->assertJsonPath('user.role', $role);
+            User::where('email', $email)->update(['email_verified_at' => now()]);
 
             $this->postJson('/api/login', [
                 'email' => $email,
@@ -96,9 +136,49 @@ class ApiAuthenticationTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('role');
     }
 
-    public function test_provisioned_admin_can_log_in(): void
+    public function test_unverified_user_can_resend_verification_email(): void
     {
-        User::factory()->create([
+        Notification::fake();
+        $user = User::factory()->unverified()->create();
+
+        $this->postJson('/api/email/resend', ['email' => $user->email])
+            ->assertOk();
+
+        Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_verified_user_can_request_a_password_reset_email(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+
+        $this->postJson('/api/forgot-password', ['email' => $user->email])
+            ->assertOk();
+
+        Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_changing_email_requires_verification_again(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create(['email' => 'old@example.test']);
+
+        $this->withToken($user->createToken('profile-test')->plainTextToken)
+            ->patchJson('/api/user', [
+                'name' => $user->name,
+                'email' => 'new@example.test',
+            ])
+            ->assertOk()
+            ->assertJsonPath('email', 'new@example.test');
+
+        $updatedUser = $user->fresh();
+        $this->assertNull($updatedUser->email_verified_at);
+        Notification::assertSentTo($updatedUser, VerifyEmail::class);
+    }
+
+    public function test_unverified_provisioned_admin_can_log_in(): void
+    {
+        User::factory()->unverified()->create([
             'name' => 'Campus Admin',
             'email' => 'admin@campusfix.test',
             'password' => 'campus-pass-123',

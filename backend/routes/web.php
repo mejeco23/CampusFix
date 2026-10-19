@@ -8,3 +8,7 @@ Route::get('/', function () {
         'status' => 'ok',
     ]);
 });
+
+Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\AuthController::class, 'verifyEmail'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');

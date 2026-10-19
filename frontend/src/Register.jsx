@@ -11,14 +11,17 @@ function Register() {
   const { register } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', password: '', password_confirmation: '', role: 'student' })
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
+    setSuccess('')
     setIsSubmitting(true)
     try {
-      await register(form)
+      const response = await register(form)
+      setSuccess(response.message || 'Account created. Check your email for the verification link before logging in.')
     } catch (requestError) {
       setError(errorMessage(requestError))
     } finally {
@@ -31,6 +34,7 @@ function Register() {
       <AuthCard title="Create your account">
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && <p className="form-error" role="alert">{error}</p>}
+          {success && <p className="profile-success" role="status">{success}</p>}
           <label className="input-row">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
             <span className="visually-hidden">Full name</span>
