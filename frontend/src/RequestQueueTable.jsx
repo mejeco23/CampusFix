@@ -13,6 +13,7 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState(null)
+  const [selectedRequest, setSelectedRequest] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -50,6 +51,7 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
     try {
       const { data } = await api.patch(`/requests/${requestId}`, { status })
       setRequests((current) => current.map((item) => item.id === requestId ? data.request : item))
+      setSelectedRequest((current) => current?.id === requestId ? data.request : current)
     } catch {
       setError('Could not update the request status. Please try again.')
     } finally {
@@ -90,7 +92,11 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
             {!isLoading && requests.length === 0 && <tr><td colSpan="7" className="admin-request-empty">No requests match your filters.</td></tr>}
             {requests.map((request) => (
               <tr key={request.id}>
-                <td><strong>#{request.id} · {request.title}</strong><small className="admin-request-description">{request.description}</small></td>
+                <td>
+                  <strong>#{request.id} · {request.title}</strong>
+                  <small className="admin-request-description">{request.description}</small>
+                  <button className="admin-link-button" type="button" onClick={() => setSelectedRequest(request)}>View details</button>
+                </td>
                 <td>{request.user?.name || 'Student'}<small className="admin-request-description">{request.user?.email || ''}</small></td>
                 <td>{request.category}</td>
                 <td>{request.building}, {request.room}</td>
@@ -120,6 +126,48 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
           <button className="admin-button admin-button--secondary" type="button" disabled={page <= 1 || isLoading} onClick={() => setPage((current) => current - 1)}>Previous</button>
           <span>Page {page} of {lastPage}</span>
           <button className="admin-button admin-button--secondary" type="button" disabled={page >= lastPage || isLoading} onClick={() => setPage((current) => current + 1)}>Next</button>
+        </div>
+      )}
+      {selectedRequest && (
+        <div
+          className="request-detail-backdrop"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setSelectedRequest(null)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setSelectedRequest(null)
+          }}
+        >
+          <section className="request-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="request-detail-title">
+            <div className="request-detail-heading">
+              <div>
+                <p className="workspace-eyebrow">REQUEST #{selectedRequest.id}</p>
+                <h2 id="request-detail-title">{selectedRequest.title}</h2>
+              </div>
+              <button className="request-detail-close" type="button" aria-label="Close request details" autoFocus onClick={() => setSelectedRequest(null)}>×</button>
+            </div>
+            <dl className="request-detail-fields">
+              <div><dt>Student</dt><dd>{selectedRequest.user?.name || 'Student'}</dd></div>
+              {selectedRequest.user?.email && <div><dt>Email</dt><dd><a href={`mailto:${selectedRequest.user.email}`}>{selectedRequest.user.email}</a></dd></div>}
+              <div><dt>Category</dt><dd>{selectedRequest.category}</dd></div>
+              <div><dt>Location</dt><dd>{selectedRequest.building}, Room {selectedRequest.room}</dd></div>
+              <div><dt>Priority</dt><dd className={`priority-label priority-label--${selectedRequest.priority}`}>{selectedRequest.priority}</dd></div>
+              <div><dt>Status</dt><dd>{selectedRequest.status.replaceAll('_', ' ')}</dd></div>
+              <div><dt>Submitted</dt><dd>{formatDate(selectedRequest.created_at)}</dd></div>
+              <div className="request-detail-description"><dt>Description</dt><dd>{selectedRequest.description}</dd></div>
+            </dl>
+            {selectedRequest.photo_url && (
+              <div className="request-detail-photo">
+                <h3>Attached photo</h3>
+                <a href={selectedRequest.photo_url} target="_blank" rel="noreferrer">
+                  <img src={selectedRequest.photo_url} alt={`Photo attached to ${selectedRequest.title}`} />
+                </a>
+              </div>
+            )}
+            <div className="request-detail-actions">
+              <button className="admin-button admin-button--primary" type="button" onClick={() => setSelectedRequest(null)}>Close</button>
+            </div>
+          </section>
         </div>
       )}
     </section>

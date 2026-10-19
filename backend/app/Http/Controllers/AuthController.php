@@ -57,16 +57,29 @@ class AuthController extends Controller
         $validated['role'] = $validated['role'] ?? 'student';
 
         $user = User::create($validated);
+        $verificationEmailStatus = 'sent';
 
         try {
             $user->sendEmailVerificationNotification();
+
+            if (in_array(config('mail.default'), ['log', 'array'], true)) {
+                $verificationEmailStatus = 'not_configured';
+            }
         } catch (\Throwable $e) {
             report($e);
+            $verificationEmailStatus = 'failed';
         }
+
+        $message = match ($verificationEmailStatus) {
+            'not_configured' => 'Your account was created, but email delivery is not configured. Set up SMTP to receive the verification link. With the current local mailer, the link is written to the backend log.',
+            'failed' => 'Your account was created, but we could not send the verification email. Please try again later or contact support.',
+            default => 'Your account was created. Check your email for the verification link before logging in.',
+        };
 
         return response()->json([
             'user' => $user->only(['id', 'name', 'email', 'role', 'profile_photo_path']) + ['profile_photo_url' => $user->profile_photo_url],
-            'message' => 'Account created. Check your email for the verification link before logging in.',
+            'verification_email_status' => $verificationEmailStatus,
+            'message' => $message,
         ], 201);
     }
 

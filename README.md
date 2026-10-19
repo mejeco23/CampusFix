@@ -63,7 +63,14 @@ php artisan serve
 
 ### Email verification and password resets
 
-The example environment uses `MAIL_MAILER=log` for local development. Verification and password-reset messages are written to `backend/storage/logs/laravel.log` instead of being delivered to an inbox. Configure an SMTP mailer in `backend/.env` to send real email. Keep `APP_URL` pointed at the Laravel API (default `http://127.0.0.1:8000`) and `FRONTEND_URL` pointed at Vite (default `http://127.0.0.1:5173`) so links open the correct app.
+The example environment is configured for Gmail SMTP. To send verification and password-reset messages:
+
+1. Enable 2-Step Verification on the Google account that will send CampusFix emails.
+2. Create an App Password for CampusFix in that Google account's security settings.
+3. Set `MAIL_USERNAME` to the sending Gmail address, `MAIL_PASSWORD` to the App Password, and `MAIL_FROM_ADDRESS` to the same sending address in `backend/.env`.
+4. Clear cached Laravel configuration with `php artisan config:clear` from `backend/`.
+
+Never use your regular Google password as `MAIL_PASSWORD`, and do not commit or share `backend/.env`. Keep `APP_URL` pointed at the Laravel API (default `http://127.0.0.1:8000`) and `FRONTEND_URL` pointed at Vite (default `http://127.0.0.1:5173`) so links open the correct app. If email delivery is not configured, the local `log` mailer can be used instead; its messages are written to `backend/storage/logs/laravel.log`.
 
 ### Frontend
 

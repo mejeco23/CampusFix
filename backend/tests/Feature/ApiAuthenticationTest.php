@@ -29,7 +29,8 @@ class ApiAuthenticationTest extends TestCase
 
         $registration->assertCreated()
             ->assertJsonPath('user.name', 'Campus Student')
-            ->assertJsonPath('message', 'Account created. Check your email for the verification link before logging in.')
+            ->assertJsonPath('verification_email_status', 'not_configured')
+            ->assertJsonPath('message', 'Your account was created, but email delivery is not configured. Set up SMTP to receive the verification link. With the current local mailer, the link is written to the backend log.')
             ->assertJsonStructure(['user' => ['id', 'name', 'email']])
             ->assertJsonMissingPath('token');
 
@@ -204,7 +205,9 @@ class ApiAuthenticationTest extends TestCase
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'Broken light');
+            ->assertJsonPath('data.0.title', 'Broken light')
+            ->assertJsonPath('data.0.status', 'pending')
+            ->assertJsonPath('data.0.description', 'Needs maintenance attention.');
     }
 
     public function test_admin_can_see_all_student_requests(): void
@@ -232,13 +235,16 @@ class ApiAuthenticationTest extends TestCase
 
     public function test_maintenance_staff_can_review_campus_requests_and_update_status(): void
     {
+        Storage::fake('public');
         $student = User::factory()->create(['name' => 'Requesting Student']);
         $otherStudent = User::factory()->create(['name' => 'Other Student']);
         $maintenance = User::factory()->create(['role' => 'maintenance']);
         $student->maintenanceRequests()->create($this->requestAttributes('Broken light'));
+        $photoPath = 'maintenance-requests/leaking-sink.jpg';
+        Storage::disk('public')->put($photoPath, 'test image');
         $otherStudent->maintenanceRequests()->create(array_merge(
             $this->requestAttributes('Leaking sink'),
-            ['priority' => 'high'],
+            ['priority' => 'high', 'photo_path' => $photoPath],
         ));
 
         $this->withToken($maintenance->createToken('maintenance-test')->plainTextToken)
@@ -251,12 +257,19 @@ class ApiAuthenticationTest extends TestCase
         $this->getJson('/api/requests?search=Leaking&priority=high')
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.user.name', 'Other Student');
+            ->assertJsonPath('data.0.user.name', 'Other Student')
+            ->assertJsonPath('data.0.description', 'Needs maintenance attention.')
+            ->assertJsonPath('data.0.photo_url', Storage::disk('public')->url($photoPath));
 
-        $requestId = $otherStudent->maintenanceRequests()->where('title', 'Leaking sink')->value('id');
+        $requestId = $student->maintenanceRequests()->where('title', 'Broken light')->value('id');
         $this->patchJson('/api/requests/'.$requestId, ['status' => 'in_progress'])
             ->assertOk()
             ->assertJsonPath('request.status', 'in_progress');
+
+        $this->withToken($student->createToken('student-status-test')->plainTextToken)
+            ->getJson('/api/requests')
+            ->assertOk()
+            ->assertJsonPath('data.0.status', 'in_progress');
     }
 
     public function test_students_cannot_update_request_status(): void

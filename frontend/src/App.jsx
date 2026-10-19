@@ -1,26 +1,27 @@
 import useAuth from './useAuth.js'
 import Dashboard from './Dashboard.jsx'
-import Login from './Login.jsx'
 import Profile from './Profile.jsx'
-import Register from './Register.jsx'
-import ForgotPassword from './ForgotPassword.jsx'
-import ResetPassword from './ResetPassword.jsx'
 import RequestForm from './RequestForm.jsx'
 import Requests from './Requests.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
 import MaintenanceDashboard from './MaintenanceDashboard.jsx'
+import LandingPage from './LandingPage.jsx'
+import ContactUs from './ContactUs.jsx'
 import './campusfix.css'
 
 function App() {
   const { user, isLoading, logout } = useAuth()
   const path = window.location.pathname
-  const isRegisterPage = path === '/register'
 
-  if (path === '/reset-password') return <ResetPassword />
-  if (path === '/forgot-password') return <ForgotPassword />
+  if (isLoading) {
+    return (
+      <main className="loading-screen" aria-label="Loading CampusFix">
+        <span className="loading-mark">CF</span>
+      </main>
+    )
+  }
 
-  if (isLoading) return <main className="loading-screen" aria-label="Loading CampusFix"><span className="loading-mark">CF</span></main>
-
+  // Authenticated User Routing
   if (user) {
     if (path === '/profile') return <Profile user={user} logout={logout} />
 
@@ -33,7 +34,13 @@ function App() {
     return <Dashboard user={user} logout={logout} />
   }
 
-  return isRegisterPage ? <Register /> : <Login />
+  // Unauthenticated Visitor Routing
+  if (path === '/login') return <LandingPage initialAuthMode="login" />
+  if (path === '/register') return <LandingPage initialAuthMode="register" />
+  if (path === '/contact') return <ContactUs />
+
+  // Root or any hash section (e.g. /#about) renders ONLY LandingPage
+  return <LandingPage />
 }
 
 export default App

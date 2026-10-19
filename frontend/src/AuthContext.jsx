@@ -17,12 +17,18 @@ function readStoredUser() {
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('campusfix_token') || sessionStorage.getItem('campusfix_token'))
-  const [user, setUser] = useState(readStoredUser)
-  const [isLoading, setIsLoading] = useState(Boolean(localStorage.getItem('campusfix_token')))
+  const [user, setUser] = useState(() => {
+    const storedToken = localStorage.getItem('campusfix_token') || sessionStorage.getItem('campusfix_token')
+    return storedToken ? readStoredUser() : null
+  })
+  const [isLoading, setIsLoading] = useState(() => Boolean(
+    localStorage.getItem('campusfix_token') || sessionStorage.getItem('campusfix_token')
+  ))
 
   useEffect(() => {
     if (!token) {
       setAuthToken(null)
+      localStorage.removeItem('campusfix_user')
       if (window.location.pathname === '/staff') {
         replacePath('/login')
       }
@@ -40,6 +46,7 @@ export function AuthProvider({ children }) {
       })
       .catch(() => {
         localStorage.removeItem('campusfix_token')
+        sessionStorage.removeItem('campusfix_token')
         localStorage.removeItem('campusfix_user')
         setToken(null)
         setUser(null)
