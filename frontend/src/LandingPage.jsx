@@ -1,15 +1,36 @@
 import React, { useState } from 'react';
+import BrandLogo from './BrandLogo.jsx';
 import Login from './Login';
 import Register from './Register';
 
 const teamMembers = [
-  { name: 'Name', position: 'Position', image: '' },
-  { name: 'Name', position: 'Position', image: '' },
-  { name: 'Name', position: 'Position', image: '' },
-  { name: 'Name', position: 'Position', image: '' },
-  { name: 'Name', position: 'Position', image: '' },
-  { name: 'Name', position: 'Position', image: '' },
+  { name: 'Edge', position: 'Project Manager', image: '/images/Eco.png' },
+  { name: 'Marc', position: 'Frontend Developer', image: '/images/Patoc.png' },
+  { name: 'Jose', position: 'Backend Developer', image: '/images/Hilacan.png' },
+  { name: 'Raven', position: 'UI/UX Designer', image: '/images/Catindig.png' },
+  { name: 'Jansen', position: 'Database Administrator', image: '/images/Silva.png' },
+  { name: 'Amvher', position: 'Quality Tester', image: '/images/Manalo.png' },
+];
 
+const reviews = [
+  {
+    name: 'Maria Santos',
+    role: 'BSIT Student',
+    rating: 5,
+    text: 'Reporting broken facilities in our building is so much quicker now.',
+  },
+  {
+    name: 'John Reyes',
+    role: 'Maintenance Staff',
+    rating: 5,
+    text: 'I can see all the tickets in one place. It helps me plan my repairs.',
+  },
+  {
+    name: 'Prof. Dela Cruz',
+    role: 'Faculty Member',
+    rating: 4,
+    text: 'The live tracking is useful. I know when my room will be fixed.',
+  },
 ];
 
 export default function LandingPage({ initialAuthMode = 'login' }) {
@@ -24,16 +45,18 @@ export default function LandingPage({ initialAuthMode = 'login' }) {
 
   return (
     <div className="landing-container">
+      <span className="hero-decor hero-decor--top-right" aria-hidden="true" />
+      <span className="hero-decor hero-decor--bottom-left" aria-hidden="true" />
+      <span className="hero-decor hero-decor--bottom-left-line" aria-hidden="true" />
+      <span className="hero-decor hero-decor--bottom-right" aria-hidden="true" />
+
       {/* Navbar */}
       <header className="landing-navbar">
         <div className="navbar-brand">
-          <svg className="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-          </svg>
-          <span className="brand-title">CampusFix</span>
+          <BrandLogo className="landing-brand-logo" />
         </div>
         <nav className="navbar-links">
-          <a href="/">Home</a>
+          <a className="active" href="/">Home</a>
           <button onClick={() => scrollToSection('how-it-works')}>How it Works?</button>
           <button onClick={() => scrollToSection('about-us')}>About Us</button>
           <button onClick={() => scrollToSection('reviews')}>Reviews</button>
@@ -45,7 +68,9 @@ export default function LandingPage({ initialAuthMode = 'login' }) {
       <section className="hero-section">
         <div className="hero-left">
           <span className="hero-badge">Campus Maintenance Portal</span>
-          <h1 className="hero-headline">Fast, simple campus issue reporting.</h1>
+          <h1 className="hero-headline">
+            Fast, simple campus <span>issue reporting.</span>
+          </h1>
           <p className="hero-subtext">
             Report maintenance hazards, track resolution status in real-time, and keep our campus community safe.
           </p>
@@ -55,6 +80,9 @@ export default function LandingPage({ initialAuthMode = 'login' }) {
             </div>
             <div className="feature-item">
               <span className="feature-check">✓</span> Live Repair Tracking
+            </div>
+            <div className="feature-item">
+              <span className="feature-check">✓</span> Safer Campus for Everyone
             </div>
           </div>
         </div>
@@ -130,11 +158,16 @@ export default function LandingPage({ initialAuthMode = 'login' }) {
         <div className="team-section">
           <h2 className="section-title">Our Team</h2>
           <div className="team-grid">
-            {teamMembers.map((member, index) => (
-              <article className="team-member" key={index}>
+            {teamMembers.map((member) => (
+              <article className="team-member" key={member.name}>
                 <div className="team-member-photo">
                   {member.image ? (
-                    <img src={member.image} alt={member.name} loading="lazy" />
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      loading="lazy"
+                      onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                    />
                   ) : (
                     <svg viewBox="0 0 64 64" aria-hidden="true">
                       <circle cx="32" cy="23" r="12" />
@@ -154,17 +187,20 @@ export default function LandingPage({ initialAuthMode = 'login' }) {
       <section id="reviews" className="landing-section">
         <h2 className="section-title">Reviews</h2>
         <div className="reviews-grid">
-          {[1, 2, 3].map((num) => (
-            <div key={num} className="review-card">
+          {reviews.map((review) => (
+            <div key={review.name} className="review-card">
               <div className="review-avatar" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="8" r="4" />
                   <path d="M4 21a8 8 0 0 1 16 0" />
                 </svg>
               </div>
-              <h3>User {num}</h3>
-              <div className="star-rating">★★★★★</div>
-              <p className="review-text">"Reporting broken facilities in our building is so much quicker now."</p>
+              <h3>{review.name}</h3>
+              <p className="review-role">{review.role}</p>
+              <div className="star-rating" aria-label={`${review.rating} out of 5 stars`}>
+                {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+              </div>
+              <p className="review-text">&quot;{review.text}&quot;</p>
             </div>
           ))}
         </div>

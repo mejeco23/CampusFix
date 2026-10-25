@@ -7,6 +7,7 @@ import AdminDashboard from './AdminDashboard.jsx'
 import MaintenanceDashboard from './MaintenanceDashboard.jsx'
 import LandingPage from './LandingPage.jsx'
 import ContactUs from './ContactUs.jsx'
+import BrandLogo from './BrandLogo.jsx'
 import './campusfix.css'
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
   if (isLoading) {
     return (
       <main className="loading-screen" aria-label="Loading CampusFix">
-        <span className="loading-mark">CF</span>
+        <BrandLogo className="loading-brand-logo" />
       </main>
     )
   }

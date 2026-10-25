@@ -6,7 +6,7 @@ function firstError(error, fallback) {
   return errors ? Object.values(errors).flat()[0] : error.response?.data?.message || fallback
 }
 
-function UsersView() {
+function UsersView({ currentUserId }) {
   const [users, setUsers] = useState([])
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -18,6 +18,7 @@ function UsersView() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [deletingUserId, setDeletingUserId] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -83,6 +84,35 @@ function UsersView() {
     }
   }
 
+  async function deleteUser(user) {
+    const confirmed = window.confirm(
+      `Permanently delete ${user.name} (${user.email})? Their account, maintenance requests, and uploaded request photos will also be deleted. This cannot be undone.`,
+    )
+    if (!confirmed) return
+
+    setDeletingUserId(user.id)
+    setError('')
+    setMessage('')
+    try {
+      const { data } = await api.delete(`/admin/users/${user.id}`)
+      setUsers((current) => current.filter((item) => item.id !== user.id))
+      if (editingUser?.id === user.id) {
+        setFormOpen(false)
+        setEditingUser(null)
+      }
+      setMessage(data.warning ? `${data.message} ${data.warning}` : data.message)
+
+      if (users.length === 1 && page > 1) {
+        setPage((current) => current - 1)
+        setLastPage((current) => Math.max(1, current - 1))
+      }
+    } catch (requestError) {
+      setError(firstError(requestError, 'Could not delete this account.'))
+    } finally {
+      setDeletingUserId(null)
+    }
+  }
+
   return (
     <section className="admin-panel admin-panel--table">
       <div className="admin-table-header">
@@ -113,7 +143,14 @@ function UsersView() {
               <tr key={user.id}>
                 <td>{user.name}</td><td>{user.email}</td><td><span className="admin-status-pill">{user.role}</span></td>
                 <td>{user.role === 'admin' || user.email_verified_at ? 'Verified' : 'Pending verification'}</td>
-                <td><button type="button" className="admin-link-button" onClick={() => startEdit(user)}>Edit</button></td>
+                <td><div className="admin-row-actions">
+                  <button type="button" className="admin-link-button" onClick={() => startEdit(user)}>Edit</button>
+                  {user.id === currentUserId ? (
+                    <button type="button" className="admin-link-button admin-delete-user" disabled title="You cannot delete your own account">Current account</button>
+                  ) : (
+                    <button type="button" className="admin-link-button admin-delete-user" disabled={deletingUserId === user.id} onClick={() => deleteUser(user)}>{deletingUserId === user.id ? 'Deleting…' : 'Delete'}</button>
+                  )}
+                </div></td>
               </tr>
             ))}
             {isLoading && <tr><td colSpan="5" className="admin-request-empty">Loading accounts…</td></tr>}
@@ -265,6 +302,6 @@ function FacilitiesView() {
   )
 }
 
-export default function AdminManagement({ view }) {
-  return view === 'users' ? <UsersView /> : <FacilitiesView />
+export default function AdminManagement({ view, currentUserId }) {
+  return view === 'users' ? <UsersView currentUserId={currentUserId} /> : <FacilitiesView />
 }

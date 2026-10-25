@@ -28,7 +28,7 @@ function Icon({ name, className = '' }) {
 }
 
 function Brand({ compact = false }) {
-    return <a className={`brand${compact ? ' brand--compact' : ''}`} href="/dashboard"><Icon name="tools" /><span>CampusFix</span></a>;
+    return <a className={`brand${compact ? ' brand--compact' : ''}`} href="/dashboard" aria-label="CampusFix dashboard"><img src="/images/campusfix-logo.png" alt="CampusFix" /></a>;
 }
 
 function Notice({ children, kind = 'success' }) {

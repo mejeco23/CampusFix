@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from './api.js'
+import BrandLogo from './BrandLogo.jsx'
 import RequestQueueTable from './RequestQueueTable.jsx'
 
 const statCards = [
@@ -18,8 +19,8 @@ function MaintenanceSidebar({ active, setView, logout }) {
     <aside className="admin-sidebar">
       <div className="admin-brand-wrap">
         <div className="admin-brand">
-          <span className="admin-brand-mark">✦</span>
-          <div><h1>CampusFix</h1><small>Maintenance Operations</small></div>
+          <BrandLogo className="admin-brand-logo" />
+          <small>Maintenance Operations</small>
         </div>
       </div>
       <nav className="admin-nav" aria-label="Maintenance navigation">

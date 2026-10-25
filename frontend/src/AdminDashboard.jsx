@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from './api.js'
+import BrandLogo from './BrandLogo.jsx'
 import RequestQueueTable from './RequestQueueTable.jsx'
 import AdminManagement from './AdminManagement.jsx'
 
@@ -27,11 +28,8 @@ function AdminSidebar({ active, setView, user, logout }) {
     <aside className="admin-sidebar">
       <div className="admin-brand-wrap">
         <div className="admin-brand">
-          <span className="admin-brand-mark">✦</span>
-          <div>
-            <h1>CampusFix</h1>
-            <small>Admin / Facility Management</small>
-          </div>
+          <BrandLogo className="admin-brand-logo" />
+          <small>Admin / Facility Management</small>
         </div>
       </div>
 
@@ -63,7 +61,7 @@ function UsersFacilitiesView() {
           <p>Manage accounts, roles, and the campus locations used in request forms</p>
         </div>
       </div>
-      <AdminManagement view="users" />
+      <AdminManagement view="users" currentUserId={user.id} />
       <AdminManagement view="facilities" />
     </div>
   )

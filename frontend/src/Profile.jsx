@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import BrandLogo from './BrandLogo.jsx'
 import { Sidebar } from './Dashboard.jsx'
 import StaffSidebar from './StaffSidebar.jsx'
 import useAuth from './useAuth.js'
@@ -80,7 +81,7 @@ function Profile({ user, logout }) {
     <div className={isStaff ? 'admin-shell' : 'workspace-shell'}>
       {sidebar}
       <main className={isStaff ? 'admin-content admin-content--wide' : 'workspace-main'}>
-        {!isStaff && <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard"><span className="brand-tool">✣</span><span>CampusFix</span></a></header>}
+        {!isStaff && <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard" aria-label="CampusFix dashboard"><BrandLogo className="workspace-brand-logo" /></a></header>}
         <div className="workspace-content">
           <div className={isStaff ? 'admin-header-row' : 'workspace-page-heading workspace-page-heading--compact'}>
             <div><p className="workspace-eyebrow">{isStaff ? 'STAFF ACCOUNT' : 'YOUR ACCOUNT'}</p><h1>Profile</h1><p className="workspace-subtitle">Update your name, email address, and photo.</p></div>

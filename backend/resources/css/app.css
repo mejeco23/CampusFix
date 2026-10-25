@@ -28,9 +28,9 @@ svg { display: block; }
 .auth-card { width: min(100%, 360px); padding: 22px 22px 18px; border: 1px solid #e9e9e2; border-radius: 14px; background: var(--paper); box-shadow: 0 12px 32px rgba(28,39,53,.12), 0 2px 7px rgba(28,39,53,.08); animation: arrive .45s ease-out both; }
 .auth-card--register { width: min(100%, 390px); }
 .brand { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; font-size: 20px; line-height: 1; font-weight: 700; }
-.brand svg { width: 26px; height: 26px; color: #314058; }
-.auth-card > .brand { display: flex; justify-content: center; font-size: 21px; }
-.auth-card > .brand svg { width: 32px; height: 32px; }
+.brand img { display: block; width: min(100%, 190px); height: auto; }
+.auth-card > .brand { display: flex; justify-content: center; width: min(100%, 230px); margin: 0 auto; }
+.sidebar > .brand img { width: 190px; }
 .auth-tagline { margin: 7px 0 16px; color: var(--muted); text-align: center; font-size: 13px; }
 .auth-tagline span { padding: 0 3px; color: #b7a85f; }
 .auth-card h1 { margin: 0; color: var(--ink); text-align: center; font-size: 19px; font-weight: 600; }
@@ -169,8 +169,7 @@ svg { display: block; }
     .sidebar-scrim { position: fixed; z-index: 20; inset: 0; border: 0; background: rgba(26,38,53,.3); }
     .app-main { width: 100%; margin: 0; }
     .mobile-header { height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 17px; border-bottom: 1px solid var(--line); background: #f0f1f1; }
-    .mobile-header .brand { font-size: 17px; }
-    .mobile-header .brand svg { width: 23px; height: 23px; }
+    .mobile-header .brand img { width: 180px; }
     .icon-button { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #d8dde1; border-radius: 5px; color: var(--ink); background: #fff; }
     .icon-button svg { width: 21px; height: 21px; }
     .content-area { min-height: calc(100vh - 58px); padding: 26px 17px 34px; }

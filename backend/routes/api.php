@@ -1,11 +1,12 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MaintenanceRequestController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
@@ -19,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/users', [AdminController::class, 'users']);
     Route::post('/admin/users', [AdminController::class, 'storeUser']);
     Route::patch('/admin/users/{user}', [AdminController::class, 'updateUser']);
+    Route::delete('/admin/users/{user}', [AdminController::class, 'destroyUser']);
     Route::get('/admin/facilities', [AdminController::class, 'facilities']);
     Route::post('/admin/buildings', [AdminController::class, 'storeBuilding']);
     Route::patch('/admin/buildings/{building}', [AdminController::class, 'updateBuilding']);
@@ -55,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         if ($request->hasFile('photo')) {
             if ($user->profile_photo_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo_path);
+                Storage::disk('public')->delete($user->profile_photo_path);
             }
 
             $user->profile_photo_path = $request->file('photo')->store('profile-photos', 'public');
@@ -66,7 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
         if ($emailChanged) {
             try {
                 $user->sendEmailVerificationNotification();
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 report($e);
             }
         }

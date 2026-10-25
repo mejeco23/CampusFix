@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from './api.js'
+import BrandLogo from './BrandLogo.jsx'
 import { Sidebar as DashboardSidebar } from './Dashboard.jsx'
 
 function displayStatus(status) {
@@ -62,7 +63,7 @@ function Requests({ user, logout }) {
     <div className="workspace-shell">
       <DashboardSidebar user={user} logout={logout} active="requests" />
       <main className="workspace-main">
-        <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard"><span className="brand-tool">✣</span><span>CampusFix</span></a></header>
+        <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard" aria-label="CampusFix dashboard"><BrandLogo className="workspace-brand-logo" /></a></header>
         <div className="workspace-content">
           <div className="workspace-page-heading">
             <div><p className="workspace-eyebrow">TRACK YOUR REPORTS</p><h1>My requests</h1><p className="workspace-subtitle">Updates and status for the issues you've reported.</p></div>

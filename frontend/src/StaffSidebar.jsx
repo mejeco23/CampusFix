@@ -1,3 +1,5 @@
+import BrandLogo from './BrandLogo.jsx'
+
 const menus = {
   maintenance: {
     subtitle: 'Maintenance Operations',
@@ -23,8 +25,8 @@ export default function StaffSidebar({ user, logout, active }) {
     <aside className="admin-sidebar">
       <div className="admin-brand-wrap">
         <div className="admin-brand">
-          <span className="admin-brand-mark">✦</span>
-          <div><h1>CampusFix</h1><small>{menu.subtitle}</small></div>
+          <BrandLogo className="admin-brand-logo" />
+          <small>{menu.subtitle}</small>
         </div>
       </div>
       <nav className="admin-nav" aria-label="Staff navigation">

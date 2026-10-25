@@ -10,8 +10,10 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -103,6 +105,53 @@ class AdminController extends Controller
         }
 
         return response()->json(['user' => $this->userData($user)]);
+    }
+
+    public function destroyUser(Request $request, User $user): JsonResponse
+    {
+        $this->ensureAdmin($request);
+
+        if ($user->id === $request->user()->id) {
+            return response()->json(['message' => 'You cannot delete your own account.'], 422);
+        }
+
+        $photoPaths = [];
+        $deleted = DB::transaction(function () use ($user, &$photoPaths): bool {
+            $admins = User::query()
+                ->where('role', 'admin')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get(['id']);
+            $user->refresh();
+
+            if ($user->role === 'admin' && $admins->count() <= 1) {
+                return false;
+            }
+
+            $photoPaths = array_values(array_filter(array_merge(
+                [$user->profile_photo_path],
+                $user->maintenanceRequests()->whereNotNull('photo_path')->pluck('photo_path')->all(),
+            )));
+            $user->tokens()->delete();
+            $user->delete();
+
+            return true;
+        });
+
+        if (! $deleted) {
+            return response()->json(['message' => 'The final admin account cannot be deleted.'], 422);
+        }
+
+        $warning = null;
+        if ($photoPaths !== [] && ! Storage::disk('public')->delete($photoPaths)) {
+            report(new \RuntimeException("Uploaded files could not all be removed for deleted user {$user->id}."));
+            $warning = 'The account was deleted, but one or more uploaded images could not be removed.';
+        }
+
+        return response()->json([
+            'message' => 'User account and related requests deleted.',
+            'warning' => $warning,
+        ]);
     }
 
     public function facilities(Request $request): JsonResponse
@@ -336,7 +385,7 @@ class AdminController extends Controller
             ->when($since, fn (Builder $query) => $query->where('created_at', '>=', $since));
     }
 
-    private function periodStart(string $period): ?\Illuminate\Support\Carbon
+    private function periodStart(string $period): ?Carbon
     {
         $now = now();
 

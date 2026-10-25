@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from './api.js'
+import BrandLogo from './BrandLogo.jsx'
 
 const statsConfig = [
   { key: 'total', label: 'Total requests', kind: 'total' },
@@ -26,7 +27,7 @@ function Icon({ name }) {
 export function Sidebar({ user, logout, active }) {
   return (
     <aside className="workspace-sidebar">
-      <a className="workspace-brand" href="/dashboard"><span className="brand-tool">✣</span><span>CampusFix</span></a>
+      <a className="workspace-brand" href="/dashboard" aria-label="CampusFix dashboard"><BrandLogo className="workspace-brand-logo" /></a>
       <nav className="workspace-nav" aria-label="Main navigation">
         <a className={active === 'home' ? 'active' : ''} href="/dashboard"><Icon name="home" /><span>Home</span></a>
         <a className={active === 'create' ? 'active' : ''} href="/create-request"><Icon name="create" /><span>Create Request</span></a>
@@ -79,7 +80,7 @@ function Dashboard({ user, logout }) {
     <div className="workspace-shell">
       <Sidebar user={user} logout={logout} active="home" />
       <main className="workspace-main">
-        <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard"><span className="brand-tool">✣</span><span>CampusFix</span></a></header>
+        <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard" aria-label="CampusFix dashboard"><BrandLogo className="workspace-brand-logo" /></a></header>
         <div className="workspace-content">
           <div className="workspace-page-heading">
             <div><p className="workspace-eyebrow">CAMPUS MAINTENANCE</p><h1>Welcome, {firstName}!</h1><p className="workspace-subtitle">Here's an overview of your maintenance requests.</p></div>

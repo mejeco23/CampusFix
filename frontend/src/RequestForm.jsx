@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from './api.js'
+import BrandLogo from './BrandLogo.jsx'
 import { Sidebar as DashboardSidebar } from './Dashboard.jsx'
 
 function RequestForm({ user, logout }) {
@@ -48,7 +49,7 @@ function RequestForm({ user, logout }) {
     <div className="workspace-shell">
       <DashboardSidebar user={user} logout={logout} active="create" />
       <main className="workspace-main">
-        <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard"><span className="brand-tool">✣</span><span>CampusFix</span></a></header>
+        <header className="mobile-workspace-brand"><a className="workspace-brand" href="/dashboard" aria-label="CampusFix dashboard"><BrandLogo className="workspace-brand-logo" /></a></header>
         <div className="workspace-content">
           <div className="workspace-page-heading workspace-page-heading--compact"><div><p className="workspace-eyebrow">LET US KNOW WHAT NEEDS FIXING</p><h1>Create maintenance request</h1><p className="workspace-subtitle">Add a few details so the right team can help.</p></div></div>
           {error && <p className="workspace-error" role="alert">{error}</p>}

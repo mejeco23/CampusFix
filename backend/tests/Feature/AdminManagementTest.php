@@ -2,13 +2,14 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\CampusFacilitySeeder;
 use App\Models\Building;
 use App\Models\Category;
-use App\Models\MaintenanceRequest;
+use App\Models\Room;
 use App\Models\User;
+use Database\Seeders\CampusFacilitySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminManagementTest extends TestCase
@@ -65,6 +66,65 @@ class AdminManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_delete_a_user_and_their_requests_and_uploaded_photos(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['profile_photo_path' => 'profile-photos/user.png']);
+        Storage::disk('public')->put('profile-photos/user.png', 'profile');
+        Storage::disk('public')->put('maintenance-requests/request.png', 'request');
+
+        $maintenanceRequest = $user->maintenanceRequests()->create([
+            'title' => 'Broken light',
+            'category' => 'Electrical',
+            'building' => 'Science Hall',
+            'room' => '204',
+            'priority' => 'high',
+            'description' => 'Needs repair.',
+            'photo_path' => 'maintenance-requests/request.png',
+        ]);
+        $user->createToken('user-test');
+        $adminToken = $admin->createToken('admin-test')->plainTextToken;
+
+        $this->withToken($adminToken)
+            ->deleteJson('/api/admin/users/'.$user->id)
+            ->assertOk()
+            ->assertJsonPath('message', 'User account and related requests deleted.')
+            ->assertJsonPath('warning', null);
+
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('maintenance_requests', ['id' => $maintenanceRequest->id]);
+        $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $user->id]);
+        Storage::disk('public')->assertMissing('profile-photos/user.png');
+        Storage::disk('public')->assertMissing('maintenance-requests/request.png');
+    }
+
+    public function test_admin_cannot_delete_their_own_account(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $token = $admin->createToken('admin-test')->plainTextToken;
+
+        $this->withToken($token)
+            ->deleteJson('/api/admin/users/'.$admin->id)
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'You cannot delete your own account.');
+
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
+
+    public function test_non_admins_cannot_delete_users(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $user = User::factory()->create(['role' => 'maintenance']);
+        $token = $student->createToken('student-test')->plainTextToken;
+
+        $this->withToken($token)
+            ->deleteJson('/api/admin/users/'.$user->id)
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+    }
+
     public function test_campus_facility_seeder_creates_seven_randomized_floor_rooms_for_each_building_idempotently(): void
     {
         $this->seed(CampusFacilitySeeder::class);
@@ -88,7 +148,7 @@ class AdminManagementTest extends TestCase
         }
 
         $this->seed(CampusFacilitySeeder::class);
-        $this->assertSame(21, \App\Models\Room::count());
+        $this->assertSame(21, Room::count());
         $this->assertSame(6, Category::count());
     }
 
