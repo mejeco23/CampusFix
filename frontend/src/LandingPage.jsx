@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import BrandLogo from './BrandLogo.jsx';
 import Login from './Login';
 import Register from './Register';
+import ForgotPassword from './ForgotPassword';
 
 const teamMembers = [
   { name: 'Edge', position: 'Project Manager', image: '/images/Eco.png' },
@@ -91,8 +92,10 @@ export default function LandingPage({ initialAuthMode = 'login' }) {
           <div className="auth-card-wrapper">
             {authMode === 'login' ? (
               <Login embedded onSwitchToRegister={() => setAuthMode('register')} />
-            ) : (
+            ) : authMode === 'register' ? (
               <Register embedded onSwitchToLogin={() => setAuthMode('login')} />
+            ) : (
+              <ForgotPassword embedded />
             )}
           </div>
         </div>

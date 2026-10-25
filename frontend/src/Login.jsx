@@ -76,7 +76,7 @@ function Login({ embedded = false, onSwitchToRegister }) {
               />
               Remember me
             </label>
-            <a className="subtle-link" href="mailto:support@campusfix.test?subject=Password%20reset">
+            <a className="subtle-link" href="/forgot-password">
               Forgot password?
             </a>
           </div>

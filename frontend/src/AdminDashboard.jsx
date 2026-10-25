@@ -52,7 +52,7 @@ function AdminSidebar({ active, setView, user, logout }) {
   )
 }
 
-function UsersFacilitiesView() {
+function UsersFacilitiesView({ user }) {
   return (
     <div className="admin-content admin-content--wide">
       <div className="admin-header-row">
@@ -184,7 +184,7 @@ export default function AdminDashboard({ user, logout }) {
   return (
     <div className="admin-shell">
       <AdminSidebar active={view} setView={setView} user={user} logout={logout} />
-      {view === 'users' ? <UsersFacilitiesView /> : view === 'review' ? <ReviewAndAssignView /> : <DashboardOverviewView />}
+      {view === 'users' ? <UsersFacilitiesView user={user} /> : view === 'review' ? <ReviewAndAssignView /> : <DashboardOverviewView />}
     </div>
   )
 }

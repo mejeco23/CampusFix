@@ -2,7 +2,7 @@ import { useState } from 'react'
 import api from './api.js'
 import AuthCard from './AuthCard.jsx'
 
-export default function ForgotPassword() {
+export default function ForgotPassword({ embedded = false }) {
   const [email, setEmail] = useState(() => new URLSearchParams(window.location.search).get('email') || '')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -46,7 +46,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <main className="auth-screen">
+    <main className={embedded ? 'auth-embedded' : 'auth-screen'}>
       <AuthCard title="Forgot password?">
         <form className="auth-form" onSubmit={handleSubmit}>
           <p className="auth-switch">Enter your email and we'll send you a link to reset your password.</p>

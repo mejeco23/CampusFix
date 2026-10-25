@@ -8,6 +8,7 @@ import MaintenanceDashboard from './MaintenanceDashboard.jsx'
 import LandingPage from './LandingPage.jsx'
 import ContactUs from './ContactUs.jsx'
 import BrandLogo from './BrandLogo.jsx'
+import ResetPassword from './ResetPassword.jsx'
 import './campusfix.css'
 
 function App() {
@@ -21,6 +22,9 @@ function App() {
       </main>
     )
   }
+
+  if (path === '/forgot-password') return <LandingPage initialAuthMode="forgot-password" />
+  if (path === '/reset-password') return <ResetPassword />
 
   // Authenticated User Routing
   if (user) {
