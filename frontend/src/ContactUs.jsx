@@ -9,8 +9,7 @@ function ContactUs() {
   function handleSubmit(event) {
     event.preventDefault()
     setIsSubmitting(true)
-    
-    // Simulate form submission handling
+
     setTimeout(() => {
       setIsSubmitting(false)
       setSubmitted(true)
@@ -19,22 +18,12 @@ function ContactUs() {
   }
 
   return (
-    <div className="public-contact-page" style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column' }}>
-      
-      {/* Top Navigation Bar */}
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 48px',
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e2e8f0'
-      }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+    <div className="public-contact-page">
+      <header>
+        <a href="/" aria-label="CampusFix home">
           <BrandLogo className="contact-brand-logo" />
         </a>
-
-        <nav className="navbar-links" style={{ gap: '32px' }}>
+        <nav className="navbar-links" aria-label="Main navigation">
           <a href="/">Home</a>
           <a href="/#how-it-works">How it Works?</a>
           <a href="/#about-us">About Us</a>
@@ -43,186 +32,98 @@ function ContactUs() {
         </nav>
       </header>
 
-      {/* Main Split Content Area */}
-      <main style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '80px',
-        padding: '40px 20px',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        width: '100%'
-      }}>
-
-        {/* Left Side Branding & Info */}
-        <div style={{ textAlign: 'left', maxWidth: '380px' }}>
-          <svg style={{ width: '64px', height: '64px', color: '#2d3748', marginBottom: '12px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <main className="public-contact-main">
+        <section className="contact-intro" aria-labelledby="contact-heading">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <h1 style={{ fontSize: '32px', fontWeight: '800', color: '#2d3748', margin: '0 0 8px 0' }}>Get in Touch</h1>
-          <p style={{ color: '#718096', fontSize: '15px', margin: '0 0 24px 0', lineHeight: '1.5' }}>
-            Have questions about maintenance requests or technical feedback? Send us a message and our support team will respond shortly.
-          </p>
+          <h1 id="contact-heading">Get in Touch</h1>
+          <p>Have questions about maintenance requests or technical feedback? Send us a message and our support team will respond shortly.</p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px', color: '#4a5568' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <svg style={{ width: '18px', height: '18px', color: '#2d3748' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="m4 7 8 6 8-6"/></svg>
+          <div className="contact-details">
+            <a href="mailto:support@campusfix.test">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="1" />
+                <path d="m4 7 8 6 8-6" />
+              </svg>
               <span>support@campusfix.test</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <svg style={{ width: '18px', height: '18px', color: '#2d3748' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </a>
+            <a href="tel:+63281234567">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
               <span>(02) 8123-4567</span>
-            </div>
+            </a>
           </div>
-        </div>
+        </section>
 
-        {/* Right Side Contact Form Card */}
-        <div style={{
-          backgroundColor: '#faf9f5',
-          borderRadius: '24px',
-          padding: '40px 36px',
-          width: '100%',
-          maxWidth: '420px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)',
-          border: '1px solid #eae6df'
-        }}>
-          <h2 style={{ fontSize: '28px', fontWeight: '800', textAlign: 'center', color: '#2d3748', margin: '0 0 24px 0' }}>Contact Us</h2>
+        <section className="contact-card" aria-labelledby="contact-form-heading">
+          <h2 id="contact-form-heading">Contact Us</h2>
 
           {submitted ? (
-            <div style={{ padding: '20px', textAlign: 'center', backgroundColor: '#f0fff4', border: '1px solid #c6f6d5', borderRadius: '12px', color: '#22543d' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Message Sent!</h3>
-              <p style={{ margin: 0, fontSize: '14px' }}>Thank you for reaching out. We will get back to you as soon as possible.</p>
-              <button
-                onClick={() => setSubmitted(false)}
-                style={{ marginTop: '16px', padding: '8px 16px', borderRadius: '6px', backgroundColor: '#3b4a5a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
-              >
+            <div className="contact-success" role="status">
+              <h3>Message Sent!</h3>
+              <p>Thank you for reaching out. We will get back to you as soon as possible.</p>
+              <button type="button" onClick={() => setSubmitted(false)}>
                 Send Another Message
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              
-              {/* Full Name */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Full Name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #2d3748',
-                    backgroundColor: '#ffffff',
-                    fontSize: '14px',
-                    color: '#2d3748',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+            <form className="contact-form" onSubmit={handleSubmit}>
+              <label className="visually-hidden" htmlFor="contact-name">Full name</label>
+              <input
+                id="contact-name"
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                autoComplete="name"
+                value={form.name}
+                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                required
+              />
 
-              {/* Email Address */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email Address"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #2d3748',
-                    backgroundColor: '#ffffff',
-                    fontSize: '14px',
-                    color: '#2d3748',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+              <label className="visually-hidden" htmlFor="contact-email">Email address</label>
+              <input
+                id="contact-email"
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                autoComplete="email"
+                value={form.email}
+                onChange={(event) => setForm({ ...form, email: event.target.value })}
+                required
+              />
 
-              {/* Subject */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="text"
-                  name="subject"
-                  placeholder="Subject"
-                  value={form.subject}
-                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #2d3748',
-                    backgroundColor: '#ffffff',
-                    fontSize: '14px',
-                    color: '#2d3748',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+              <label className="visually-hidden" htmlFor="contact-subject">Subject</label>
+              <input
+                id="contact-subject"
+                type="text"
+                name="subject"
+                placeholder="Subject"
+                value={form.subject}
+                onChange={(event) => setForm({ ...form, subject: event.target.value })}
+                required
+              />
 
-              {/* Message */}
-              <div>
-                <textarea
-                  name="message"
-                  rows="4"
-                  placeholder="Write your message here..."
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #2d3748',
-                    backgroundColor: '#ffffff',
-                    fontSize: '14px',
-                    color: '#2d3748',
-                    outline: 'none',
-                    resize: 'none',
-                    fontFamily: 'inherit'
-                  }}
-                />
-              </div>
+              <label className="visually-hidden" htmlFor="contact-message">Message</label>
+              <textarea
+                id="contact-message"
+                name="message"
+                rows="4"
+                placeholder="Write your message here..."
+                value={form.message}
+                onChange={(event) => setForm({ ...form, message: event.target.value })}
+                required
+              />
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                style={{
-                  marginTop: '6px',
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '6px',
-                  backgroundColor: '#3b4a5a',
-                  color: '#ffffff',
-                  border: 'none',
-                  fontWeight: '700',
-                  fontSize: '15px',
-                  cursor: 'pointer'
-                }}
-              >
+              <button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Sending…' : 'Send Message'}
               </button>
             </form>
           )}
 
-          <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: '#4a5568' }}>
-            Back to{' '}
-            <a href="/" style={{ color: '#2d3748', textDecoration: 'underline', fontWeight: '600' }}>
-              Home
-            </a>
-          </p>
-        </div>
+          <p className="contact-back-link">Back to <a href="/">Home</a></p>
+        </section>
       </main>
     </div>
   )

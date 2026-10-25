@@ -737,6 +737,12 @@
   background: #351d1b;
 }
 
+.landing-container .auth-card-wrapper .forgot-password-success {
+  color: #c6ebcf;
+  border-color: #376847;
+  background: #203528;
+}
+
 .landing-container .auth-card-wrapper .registration-result {
   color: #f4f4f4;
   border-color: #414141;
@@ -1021,11 +1027,26 @@
 }
 
 .public-contact-page > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   min-height: 74px;
   padding: 0 clamp(20px, 5vw, 64px) !important;
   border-bottom: 3px solid var(--public-gold) !important;
   background: var(--public-surface) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+}
+
+.public-contact-page main {
+  width: 100%;
+  max-width: 1200px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 80px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
 .public-contact-page > header a,
@@ -1041,55 +1062,165 @@
   color: #705700 !important;
 }
 
-.public-contact-page main > div:last-child {
-  padding: 32px !important;
-  border: 1px solid var(--public-line) !important;
-  border-top: 4px solid var(--public-gold) !important;
-  border-radius: 9px !important;
-  background: var(--public-surface) !important;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, .06) !important;
+.public-contact-page .contact-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  border: 1px solid var(--public-line);
+  border-top: 4px solid var(--public-gold);
+  border-radius: 9px;
+  background: var(--public-surface);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, .06);
 }
 
-.public-contact-page main h1,
-.public-contact-page main h2 {
-  color: var(--public-ink) !important;
+.public-contact-page .contact-card h2 {
+  margin: 0 0 24px;
+  color: var(--public-ink);
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
 }
 
-.public-contact-page main > div:first-child > p,
-.public-contact-page main > div:last-child > p,
-.public-contact-page main > div:first-child > div {
-  color: var(--public-muted) !important;
+.public-contact-page .contact-intro {
+  max-width: 440px;
 }
 
-.public-contact-page main > div:first-child svg {
-  color: #705700 !important;
+.public-contact-page .contact-intro > svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px;
+  color: #705700;
 }
 
-.public-contact-page input,
-.public-contact-page textarea {
-  color: var(--public-ink) !important;
-  border-color: var(--public-gray) !important;
-  background-color: var(--public-surface) !important;
+.public-contact-page .contact-intro h1 {
+  margin: 0 0 8px;
+  color: var(--public-ink);
+  font-size: 36px;
+  font-weight: 800;
 }
 
-.public-contact-page input:focus,
-.public-contact-page textarea:focus {
-  border-color: #9b7b00 !important;
+.public-contact-page .contact-intro > p {
+  margin: 0 0 24px;
+  color: var(--public-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.public-contact-page .contact-details {
+  display: grid;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.public-contact-page .contact-details a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--public-muted);
+  text-decoration: none;
+}
+
+.public-contact-page .contact-details a:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.public-contact-page .contact-details svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: #705700;
+}
+
+.public-contact-page .contact-form {
+  display: grid;
+  gap: 14px;
+}
+
+.public-contact-page .contact-form input,
+.public-contact-page .contact-form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  color: var(--public-ink);
+  border: 1.5px solid var(--public-gray);
+  border-radius: 8px;
+  background: var(--public-surface);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.public-contact-page .contact-form textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+
+.public-contact-page .contact-form input:focus,
+.public-contact-page .contact-form textarea:focus {
+  border-color: #9b7b00;
   box-shadow: 0 0 0 3px rgba(255, 204, 0, .22);
 }
 
-.public-contact-page main button {
-  color: var(--public-ink) !important;
-  border: 1px solid var(--public-gold) !important;
-  background: var(--public-gold) !important;
+.public-contact-page .contact-form button,
+.public-contact-page .contact-success button {
+  min-height: 46px;
+  margin-top: 4px;
+  padding: 12px;
+  color: var(--public-ink);
+  border: 1px solid var(--public-gold);
+  border-radius: 6px;
+  background: var(--public-gold);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms, transform 150ms;
 }
 
-.public-contact-page main button:hover:not(:disabled) {
-  background: #e6b800 !important;
+.public-contact-page .contact-form button:hover:not(:disabled),
+.public-contact-page .contact-success button:hover {
+  background: #e6b800;
+  transform: translateY(-1px);
 }
 
-.public-contact-page main > div:last-child > p a {
-  color: var(--public-ink) !important;
+.public-contact-page .contact-form button:disabled {
+  opacity: .68;
+  cursor: wait;
+}
+
+.public-contact-page .contact-success {
+  padding: 20px;
+  color: #22543d;
+  border: 1px solid #c6f6d5;
+  border-radius: 12px;
+  background: #f0fff4;
+  text-align: center;
+}
+
+.public-contact-page .contact-success h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.public-contact-page .contact-success p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.public-contact-page .contact-back-link {
+  margin: 20px 0 0;
+  color: var(--public-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.public-contact-page .contact-back-link a {
+  color: var(--public-ink);
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 @media (max-width: 800px) {
@@ -1145,11 +1276,11 @@
     padding: 32px 22px !important;
   }
 
-  .public-contact-page main > div:first-child {
+  .public-contact-page .contact-intro {
     max-width: none !important;
   }
 
-  .public-contact-page main > div:last-child {
+  .public-contact-page .contact-card {
     width: min(100%, 420px) !important;
     margin: 0 auto;
   }
@@ -1442,7 +1573,7 @@
   }
 
   .landing-container .auth-card-wrapper .auth-card,
-  .public-contact-page main > div:last-child {
+  .public-contact-page .contact-card {
     padding: 24px 20px;
   }
 
