@@ -78,6 +78,10 @@ In Brevo, configure and verify the sender address used for `MAIL_FROM_ADDRESS`. 
 
 Do not commit or share `backend/.env` or the Brevo API key.
 
+### Profile photos and uploaded images
+
+The backend Docker startup creates Laravel's `public/storage` link so uploaded images can be served from the backend's `/storage` URL. Render's container filesystem is ephemeral by default, so uploads can disappear after a restart or redeploy. To retain uploaded images, attach a persistent disk to the backend service mounted at `/var/data` and set `PUBLIC_STORAGE_PATH=/var/data` in that service's environment. The Docker startup creates the directory and storage link using that path. After enabling persistent storage, users may need to upload again if their previous files were lost.
+
 ### Frontend
 
 Open a terminal in the `frontend/` directory and run:

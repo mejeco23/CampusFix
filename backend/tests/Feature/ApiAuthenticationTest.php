@@ -173,7 +173,9 @@ class ApiAuthenticationTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('profile_photo_path', fn ($value) => is_string($value) && str_contains($value, 'profile-photos'));
 
-        Storage::disk('public')->assertExists($response->json('profile_photo_path'));
+        $photoPath = $response->json('profile_photo_path');
+        Storage::disk('public')->assertExists($photoPath);
+        $this->assertSame(Storage::disk('public')->url($photoPath), $response->json('profile_photo_url'));
     }
 
     public function test_students_and_maintenance_staff_can_register_and_login_as_their_role(): void
