@@ -1,7 +1,8 @@
+
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
   headers: {
     Accept: 'application/json',
   },
@@ -12,6 +13,9 @@ export function setAuthToken(token) {
   else delete api.defaults.headers.common.Authorization
 }
 
-setAuthToken(localStorage.getItem('campusfix_token') || sessionStorage.getItem('campusfix_token'))
+setAuthToken(
+  localStorage.getItem('campusfix_token') ||
+  sessionStorage.getItem('campusfix_token')
+)
 
 export default api
