@@ -66,7 +66,7 @@ class AuthController extends Controller
         }
 
         $message = match ($verificationEmailStatus) {
-            'failed' => 'Your account was created, but we could not send the verification email. Please try again later or contact support.',
+            'failed' => 'Your account was created, but we could not send the verification email. Please try again later using Resend Verification Email on the login page.',
             default => 'Your account was created. Check your email for the verification link before logging in.',
         };
 

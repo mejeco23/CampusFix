@@ -14,7 +14,7 @@ class BrevoChannel
         $apiKey = config('services.brevo.key');
         $senderEmail = config('mail.from.address');
 
-        if (! $apiKey || ! $senderEmail) {
+        if (! $apiKey || ! filter_var($senderEmail, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('Brevo email delivery is not configured.');
         }
 
@@ -29,8 +29,18 @@ class BrevoChannel
         }
 
         if (! $response->successful()) {
+            $error = $response->json();
+            $providerCode = is_array($error) && is_string($error['code'] ?? null)
+                ? $error['code']
+                : null;
+            $providerMessage = is_array($error) && is_string($error['message'] ?? null)
+                ? $error['message']
+                : null;
+
             throw new RuntimeException(
                 'Brevo email API failed with HTTP status '.$response->status()
+                .($providerCode ? ' ('.$providerCode.')' : '')
+                .($providerMessage ? ': '.$providerMessage : '')
             );
         }
     }

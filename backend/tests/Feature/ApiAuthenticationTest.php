@@ -118,7 +118,27 @@ class ApiAuthenticationTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('verification_email_status', 'failed')
-            ->assertJsonPath('message', 'Your account was created, but we could not send the verification email. Please try again later or contact support.');
+            ->assertJsonPath('message', 'Your account was created, but we could not send the verification email. Please try again later using Resend Verification Email on the login page.');
+    }
+
+    public function test_registration_reports_missing_brevo_sender_configuration(): void
+    {
+        config([
+            'services.brevo.key' => 'test-brevo-key',
+            'mail.from.address' => null,
+        ]);
+        Http::fake();
+
+        $this->postJson('/api/register', [
+            'name' => 'Campus Student',
+            'email' => 'student@example.test',
+            'password' => 'campus-pass-123',
+            'password_confirmation' => 'campus-pass-123',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('verification_email_status', 'failed');
+
+        Http::assertNothingSent();
     }
 
     public function test_profile_photo_can_be_uploaded(): void
