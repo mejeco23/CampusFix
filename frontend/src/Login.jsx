@@ -1,5 +1,5 @@
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import api from './api.js'
 import AuthCard from './AuthCard.jsx'
 import useAuth from './useAuth.js'
 
@@ -15,12 +15,48 @@ function Login({ embedded = false, onSwitchToRegister }) {
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [resendMessage, setResendMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const [showResendVerification, setShowResendVerification] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const verificationStatus = params.get('verified')
+
+    if (verificationStatus === '1') {
+      setNotice('Your email has been verified successfully. You can now sign in.')
+    } else if (verificationStatus === 'invalid') {
+      setError('This verification link is invalid or has expired. Please request a new verification email.')
+    }
+  }, [])
+
+  async function handleResendVerification() {
+    const emailToResend = (form.email || '').trim()
+    if (!emailToResend) {
+      setResendMessage('Enter your email address to resend the verification email.')
+      return
+    }
+
+    setResendMessage('')
+    setIsResending(true)
+
+    try {
+      const { data } = await api.post('/email/resend', { email: emailToResend })
+      setResendMessage(data.message || 'If that account needs verification, a new link has been sent.')
+    } catch (requestError) {
+      setResendMessage(requestError.response?.data?.message || 'We could not send the verification email right now. Please try again later.')
+    } finally {
+      setIsResending(false)
+    }
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
     setNotice('')
+    setResendMessage('')
+    setShowResendVerification(false)
     setIsSubmitting(true)
 
     try {
@@ -30,7 +66,8 @@ function Login({ embedded = false, onSwitchToRegister }) {
       setError(errorMessage(requestError))
 
       if (code === 'email_not_verified') {
-        setNotice('Your email is not verified yet. Please contact support to request a new verification link.')
+        setShowResendVerification(true)
+        setNotice('Your email is not verified yet. Please check your inbox and spam folder for the verification link.')
       }
     } finally {
       setIsSubmitting(false)
@@ -97,6 +134,20 @@ function Login({ embedded = false, onSwitchToRegister }) {
             {isSubmitting ? 'Signing in…' : 'Login'}
           </button>
 
+          {showResendVerification && (
+            <div className="registration-result" role="status">
+              <p>Need a fresh verification email? We can send another one to your address.</p>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={handleResendVerification}
+                disabled={isResending}
+              >
+                {isResending ? 'Sending…' : 'Resend Verification Email'}
+              </button>
+              {resendMessage && <p>{resendMessage}</p>}
+            </div>
+          )}
         </form>
 
         <p className="auth-switch">
