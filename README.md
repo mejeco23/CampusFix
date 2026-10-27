@@ -63,14 +63,20 @@ php artisan serve
 
 ### Email verification and password resets
 
-The example environment is configured for Gmail SMTP. To send verification and password-reset messages:
+CampusFix sends email verification and password-reset messages through the Brevo Transactional Email API; it does not require SMTP. Set these environment variables in `backend/.env` locally and in the Render backend service:
 
-1. Enable 2-Step Verification on the Google account that will send CampusFix emails.
-2. Create an App Password for CampusFix in that Google account's security settings.
-3. Set `MAIL_USERNAME` to the sending Gmail address, `MAIL_PASSWORD` to the App Password, and `MAIL_FROM_ADDRESS` to the same sending address in `backend/.env`.
-4. Clear cached Laravel configuration with `php artisan config:clear` from `backend/`.
+| Variable | Purpose |
+| --- | --- |
+| `BREVO_API_KEY` | Private Brevo API key. Keep it on the backend; never use a `VITE_` variable. |
+| `MAIL_FROM_ADDRESS` | Email address for a sender verified in Brevo. |
+| `MAIL_FROM_NAME` | Sender display name, for example `CampusFix`. |
+| `APP_URL` | Public base URL of the Laravel backend, used to create signed verification links. |
+| `FRONTEND_URL` | Public base URL of the React app, used by verification redirects and reset links. |
+| `AUTH_VERIFICATION_EXPIRE` | Verification-link lifetime in minutes; defaults to `60`. |
 
-Never use your regular Google password as `MAIL_PASSWORD`, and do not commit or share `backend/.env`. Keep `APP_URL` pointed at the Laravel API (default `http://127.0.0.1:8000`) and `FRONTEND_URL` pointed at Vite (default `http://127.0.0.1:5173`) so links open the correct app. If email delivery is not configured, the local `log` mailer can be used instead; its messages are written to `backend/storage/logs/laravel.log`.
+In Brevo, configure and verify the sender address used for `MAIL_FROM_ADDRESS`. Set `APP_URL` and `FRONTEND_URL` to the deployed service URLs in Render, without a trailing slash. After changing Render environment variables, redeploy and ensure any Laravel configuration cache is regenerated with the deployed environment values. Locally, run `php artisan config:clear` from `backend/` after changing `.env`.
+
+Do not commit or share `backend/.env` or the Brevo API key.
 
 ### Frontend
 

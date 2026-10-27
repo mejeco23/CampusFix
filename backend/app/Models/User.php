@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\BrevoResetPassword;
+use App\Notifications\BrevoVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -71,5 +73,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function maintenanceRequests(): HasMany
     {
         return $this->hasMany(MaintenanceRequest::class);
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new BrevoVerifyEmail);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new BrevoResetPassword($token));
     }
 }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -61,17 +60,12 @@ class AuthController extends Controller
 
         try {
             $user->sendEmailVerificationNotification();
-
-            if (in_array(config('mail.default'), ['log', 'array'], true)) {
-                $verificationEmailStatus = 'not_configured';
-            }
         } catch (\Throwable $e) {
             report($e);
             $verificationEmailStatus = 'failed';
         }
 
         $message = match ($verificationEmailStatus) {
-            'not_configured' => 'Your account was created, but email delivery is not configured. Set up SMTP to receive the verification link. With the current local mailer, the link is written to the backend log.',
             'failed' => 'Your account was created, but we could not send the verification email. Please try again later or contact support.',
             default => 'Your account was created. Check your email for the verification link before logging in.',
         };
@@ -85,9 +79,12 @@ class AuthController extends Controller
 
     public function forgotPassword(Request $request)
     {
-        $request->validate(['email' => ['required', 'email']]);
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
 
         $user = User::where('email', $request->email)->first();
+
         if ($user && ! $user->hasVerifiedEmail()) {
             return response()->json([
                 'code' => 'email_not_verified',
@@ -95,18 +92,26 @@ class AuthController extends Controller
             ], 403);
         }
 
-        ResetPassword::createUrlUsing(fn ($user, string $token) => rtrim(env('FRONTEND_URL', 'http://127.0.0.1:5173'), '/')
-            .'/reset-password?token='.$token.'&email='.urlencode($user->getEmailForPasswordReset()));
+        // Keep the response generic for privacy.
+        if (! $user) {
+            return response()->json([
+                'message' => 'If that email is registered, a password reset link has been sent.',
+            ]);
+        }
 
         try {
             Password::sendResetLink($request->only('email'));
         } catch (\Throwable $e) {
             report($e);
 
-            return response()->json(['message' => 'We could not send the email right now. Please try again later.'], 500);
+            return response()->json([
+                'message' => 'We could not send the email right now. Please try again later.',
+            ], 500);
         }
 
-        return response()->json(['message' => 'If that email is registered, a password reset link has been sent.']);
+        return response()->json([
+            'message' => 'If that email is registered, a password reset link has been sent.',
+        ]);
     }
 
     public function resendVerification(Request $request)
@@ -129,7 +134,7 @@ class AuthController extends Controller
 
     public function verifyEmail(Request $request, int $id, string $hash)
     {
-        $frontend = rtrim(env('FRONTEND_URL', 'http://127.0.0.1:5173'), '/');
+        $frontend = rtrim(config('app.frontend_url'), '/');
         $user = User::find($id);
 
         if (! $user || ! hash_equals(sha1($user->getEmailForVerification()), $hash)) {

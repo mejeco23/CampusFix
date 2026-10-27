@@ -3,10 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\BrevoResetPassword;
+use App\Notifications\BrevoVerifyEmail;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as ClientRequest;
+use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -18,7 +24,14 @@ class ApiAuthenticationTest extends TestCase
 
     public function test_registration_creates_an_account_that_can_log_in_separately(): void
     {
-        Notification::fake();
+        config([
+            'services.brevo.key' => 'test-brevo-key',
+            'mail.from.address' => 'no-reply@example.test',
+            'mail.from.name' => 'CampusFix',
+        ]);
+        Http::fake([
+            'https://api.brevo.com/v3/smtp/email' => Http::response([], 201),
+        ]);
 
         $registration = $this->postJson('/api/register', [
             'name' => 'Campus Student',
@@ -29,13 +42,12 @@ class ApiAuthenticationTest extends TestCase
 
         $registration->assertCreated()
             ->assertJsonPath('user.name', 'Campus Student')
-            ->assertJsonPath('verification_email_status', 'not_configured')
-            ->assertJsonPath('message', 'Your account was created, but email delivery is not configured. Set up SMTP to receive the verification link. With the current local mailer, the link is written to the backend log.')
+            ->assertJsonPath('verification_email_status', 'sent')
+            ->assertJsonPath('message', 'Your account was created. Check your email for the verification link before logging in.')
             ->assertJsonStructure(['user' => ['id', 'name', 'email']])
             ->assertJsonMissingPath('token');
 
         $user = User::where('email', 'student@example.test')->firstOrFail();
-        Notification::assertSentTo($user, VerifyEmail::class);
         $this->getJson('/api/user')->assertUnauthorized();
 
         $this->postJson('/api/login', [
@@ -71,6 +83,42 @@ class ApiAuthenticationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('name', 'Campus Student Updated')
             ->assertJsonPath('email', 'student.updated@example.test');
+
+        Http::assertSent(function (ClientRequest $request) use ($user): bool {
+            $payload = $request->data();
+            $html = $payload['htmlContent'] ?? '';
+
+            if (! $request->hasHeader('api-key', 'test-brevo-key')
+                || ($payload['to'][0]['email'] ?? null) !== $user->email
+                || ! preg_match('/href="([^"]+)"/', $html, $matches)) {
+                return false;
+            }
+
+            $verificationUrl = html_entity_decode($matches[1], ENT_QUOTES);
+
+            return URL::hasValidSignature(HttpRequest::create($verificationUrl));
+        });
+    }
+
+    public function test_registration_reports_brevo_delivery_failure(): void
+    {
+        config([
+            'services.brevo.key' => 'test-brevo-key',
+            'mail.from.address' => 'no-reply@example.test',
+        ]);
+        Http::fake([
+            'https://api.brevo.com/v3/smtp/email' => Http::response([], 401),
+        ]);
+
+        $this->postJson('/api/register', [
+            'name' => 'Campus Student',
+            'email' => 'student@example.test',
+            'password' => 'campus-pass-123',
+            'password_confirmation' => 'campus-pass-123',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('verification_email_status', 'failed')
+            ->assertJsonPath('message', 'Your account was created, but we could not send the verification email. Please try again later or contact support.');
     }
 
     public function test_profile_photo_can_be_uploaded(): void
@@ -145,7 +193,18 @@ class ApiAuthenticationTest extends TestCase
         $this->postJson('/api/email/resend', ['email' => $user->email])
             ->assertOk();
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, BrevoVerifyEmail::class);
+    }
+
+    public function test_verified_user_does_not_receive_a_verification_email(): void
+    {
+        Http::fake();
+        $user = User::factory()->create();
+
+        $this->postJson('/api/email/resend', ['email' => $user->email])
+            ->assertOk();
+
+        Http::assertNothingSent();
     }
 
     public function test_verified_user_can_request_a_password_reset_email(): void
@@ -156,7 +215,101 @@ class ApiAuthenticationTest extends TestCase
         $this->postJson('/api/forgot-password', ['email' => $user->email])
             ->assertOk();
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, BrevoResetPassword::class);
+    }
+
+    public function test_password_reset_email_uses_brevo_and_laravels_password_broker_token(): void
+    {
+        config([
+            'services.brevo.key' => 'test-brevo-key',
+            'mail.from.address' => 'no-reply@example.test',
+            'mail.from.name' => 'CampusFix',
+            'app.frontend_url' => 'https://campusfix.example.test',
+        ]);
+        Http::fake([
+            'https://api.brevo.com/v3/smtp/email' => Http::response([], 201),
+        ]);
+        Event::fake([PasswordReset::class]);
+        $user = User::factory()->create(['name' => 'Password Tester']);
+        $user->createToken('revoke-after-password-reset');
+
+        $this->postJson('/api/forgot-password', ['email' => $user->email])
+            ->assertOk()
+            ->assertJsonPath('message', 'If that email is registered, a password reset link has been sent.');
+
+        $resetToken = null;
+        Http::assertSent(function (ClientRequest $request) use ($user, &$resetToken): bool {
+            $payload = $request->data();
+            $html = $payload['htmlContent'] ?? '';
+
+            if (! $request->hasHeader('api-key', 'test-brevo-key')
+                || ($payload['to'][0]['email'] ?? null) !== $user->email
+                || ! preg_match('/href="([^"]+)"/', $html, $matches)) {
+                return false;
+            }
+
+            $resetUrl = html_entity_decode($matches[1], ENT_QUOTES);
+            parse_str((string) parse_url($resetUrl, PHP_URL_QUERY), $query);
+            $resetToken = $query['token'] ?? null;
+
+            return str_starts_with($resetUrl, 'https://campusfix.example.test/reset-password?token=')
+                && ($query['email'] ?? null) === $user->email;
+        });
+
+        $this->postJson('/api/reset-password', [
+            'token' => $resetToken,
+            'email' => $user->email,
+            'password' => 'new-campus-pass-123',
+            'password_confirmation' => 'new-campus-pass-123',
+        ])->assertOk()
+            ->assertJsonPath('message', 'Password has been reset. You can now log in.');
+
+        $this->assertTrue(Hash::check('new-campus-pass-123', $user->fresh()->password));
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'tokenable_id' => $user->id,
+            'name' => 'revoke-after-password-reset',
+        ]);
+        Event::assertDispatched(PasswordReset::class);
+    }
+
+    public function test_unverified_user_cannot_request_a_password_reset_email(): void
+    {
+        Http::fake();
+        $user = User::factory()->unverified()->create();
+
+        $this->postJson('/api/forgot-password', ['email' => $user->email])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'email_not_verified');
+
+        Http::assertNothingSent();
+    }
+
+    public function test_unknown_email_keeps_generic_password_reset_response_without_sending_email(): void
+    {
+        Http::fake();
+
+        $this->postJson('/api/forgot-password', ['email' => 'unknown@example.test'])
+            ->assertOk()
+            ->assertJsonPath('message', 'If that email is registered, a password reset link has been sent.');
+
+        Http::assertNothingSent();
+    }
+
+    public function test_brevo_password_reset_failure_returns_a_friendly_error(): void
+    {
+        config([
+            'services.brevo.key' => 'test-brevo-key',
+            'mail.from.address' => 'no-reply@example.test',
+        ]);
+        Http::fake([
+            'https://api.brevo.com/v3/smtp/email' => Http::response([], 401),
+        ]);
+
+        $user = User::factory()->create();
+
+        $this->postJson('/api/forgot-password', ['email' => $user->email])
+            ->assertInternalServerError()
+            ->assertJsonPath('message', 'We could not send the email right now. Please try again later.');
     }
 
     public function test_changing_email_requires_verification_again(): void
@@ -174,7 +327,7 @@ class ApiAuthenticationTest extends TestCase
 
         $updatedUser = $user->fresh();
         $this->assertNull($updatedUser->email_verified_at);
-        Notification::assertSentTo($updatedUser, VerifyEmail::class);
+        Notification::assertSentTo($updatedUser, BrevoVerifyEmail::class);
     }
 
     public function test_unverified_provisioned_admin_can_log_in(): void

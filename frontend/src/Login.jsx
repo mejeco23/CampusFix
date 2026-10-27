@@ -1,26 +1,37 @@
+
 import { useState } from 'react'
 import AuthCard from './AuthCard.jsx'
 import useAuth from './useAuth.js'
 
 function errorMessage(error) {
   const errors = error.response?.data?.errors
-  return errors ? Object.values(errors).flat()[0] : error.response?.data?.message || 'Unable to sign in. Check your details and try again.'
+  return errors
+    ? Object.values(errors).flat()[0]
+    : error.response?.data?.message || 'Unable to sign in. Check your details and try again.'
 }
 
 function Login({ embedded = false, onSwitchToRegister }) {
   const { login } = useAuth()
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
+    setNotice('')
     setIsSubmitting(true)
+
     try {
       await login(form)
     } catch (requestError) {
+      const code = requestError.response?.data?.code
       setError(errorMessage(requestError))
+
+      if (code === 'email_not_verified') {
+        setNotice('Your email is not verified yet. Please contact support to request a new verification link.')
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -31,6 +42,7 @@ function Login({ embedded = false, onSwitchToRegister }) {
       <AuthCard title="Welcome back">
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && <p className="form-error" role="alert">{error}</p>}
+          {notice && <p role="status">{notice}</p>}
 
           <label className="input-row">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -84,6 +96,7 @@ function Login({ embedded = false, onSwitchToRegister }) {
           <button className="primary-button" type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in…' : 'Login'}
           </button>
+
         </form>
 
         <p className="auth-switch">

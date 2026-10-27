@@ -10,6 +10,9 @@
       "**/vendor": true,
       "**/node_modules": true,
       "**/dist": true
+    },
+    "php.problems.exclude": {
+      "backend/vendor/": true
     }
   }
 }
