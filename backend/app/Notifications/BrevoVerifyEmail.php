@@ -49,9 +49,12 @@ class BrevoVerifyEmail extends Notification
                        Verify Email Address
                     </a>
                 </p>
+                <p>If the button does not open, copy and paste this link into your browser:</p>
+                <p><code>'.e($verificationUrl).'</code></p>
                 <p>This verification link expires in '.$expiresInMinutes.' minutes.</p>
                 <p>If you did not create a CampusFix account, you can ignore this email.</p>
             ',
+            'textContent' => "Welcome to CampusFix!\n\nPlease verify your email address to activate your account. Copy and paste this link into your browser:\n".$verificationUrl."\n\nThis verification link expires in ".$expiresInMinutes." minutes.\n\nIf you did not create a CampusFix account, you can ignore this email.",
         ];
     }
 }

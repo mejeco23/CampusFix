@@ -87,16 +87,20 @@ class ApiAuthenticationTest extends TestCase
         Http::assertSent(function (ClientRequest $request) use ($user): bool {
             $payload = $request->data();
             $html = $payload['htmlContent'] ?? '';
+            $text = $payload['textContent'] ?? '';
 
             if (! $request->hasHeader('api-key', 'test-brevo-key')
                 || ($payload['to'][0]['email'] ?? null) !== $user->email
-                || ! preg_match('/href="([^"]+)"/', $html, $matches)) {
+                || ! preg_match('/href="([^"]+)"/', $html, $matches)
+                || ! preg_match('/https?:\/\/\S+/', $text, $textMatches)) {
                 return false;
             }
 
             $verificationUrl = html_entity_decode($matches[1], ENT_QUOTES);
+            $plainTextVerificationUrl = $textMatches[0];
 
-            return URL::hasValidSignature(HttpRequest::create($verificationUrl));
+            return URL::hasValidSignature(HttpRequest::create($verificationUrl))
+                && URL::hasValidSignature(HttpRequest::create($plainTextVerificationUrl));
         });
     }
 
