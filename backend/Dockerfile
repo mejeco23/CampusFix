@@ -29,4 +29,4 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 
 EXPOSE 80
 
-CMD ["sh", "-c", "mkdir -p \"${PUBLIC_STORAGE_PATH:-storage/app/public}\" && php artisan storage:link --force && php artisan migrate --force && php artisan db:seed --class=SuperAdminSeeder --force && apache2-foreground"]
+CMD ["sh", "-c", "mkdir -p \"${PUBLIC_STORAGE_PATH:-storage/app/public}\" && php artisan storage:link --force && php artisan migrate --force && php artisan db:seed --class=SuperAdminSeeder --force && php artisan db:seed --class=CampusFacilitySeeder --force && apache2-foreground"]
