@@ -412,7 +412,7 @@ class ApiAuthenticationTest extends TestCase
             ->assertJsonCount(2, 'requests');
     }
 
-    public function test_maintenance_staff_can_review_campus_requests_and_update_status(): void
+    public function test_maintenance_staff_can_review_requests_but_cannot_verify_them(): void
     {
         Storage::fake('public');
         $student = User::factory()->create(['name' => 'Requesting Student']);
@@ -442,13 +442,18 @@ class ApiAuthenticationTest extends TestCase
 
         $requestId = $student->maintenanceRequests()->where('title', 'Broken light')->value('id');
         $this->patchJson('/api/requests/'.$requestId, ['status' => 'in_progress'])
-            ->assertOk()
-            ->assertJsonPath('request.status', 'in_progress');
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('maintenance_requests', [
+            'id' => $requestId,
+            'status' => 'pending',
+        ]);
 
         $this->withToken($student->createToken('student-status-test')->plainTextToken)
             ->getJson('/api/requests')
             ->assertOk()
-            ->assertJsonPath('data.0.status', 'in_progress');
+            ->assertJsonPath('data.0.status', 'pending');
     }
 
     public function test_students_cannot_update_request_status(): void
@@ -461,7 +466,7 @@ class ApiAuthenticationTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_admin_can_update_request_status(): void
+    public function test_admin_can_verify_pending_requests_but_cannot_complete_them(): void
     {
         $student = User::factory()->create();
         $admin = User::factory()->create(['role' => 'admin']);
@@ -472,9 +477,41 @@ class ApiAuthenticationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('request.status', 'in_progress');
 
+        $this->patchJson('/api/requests/'.$maintenanceRequest->id, ['status' => 'completed'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
         $this->assertDatabaseHas('maintenance_requests', [
             'id' => $maintenanceRequest->id,
             'status' => 'in_progress',
+        ]);
+    }
+
+    public function test_maintenance_can_confirm_completion_only_after_admin_verifies_request(): void
+    {
+        $student = User::factory()->create();
+        $maintenance = User::factory()->create(['role' => 'maintenance']);
+        $maintenanceRequest = $student->maintenanceRequests()->create($this->requestAttributes('Broken light'));
+        $maintenanceToken = $maintenance->createToken('maintenance-test')->plainTextToken;
+
+        $this->withToken($maintenanceToken)
+            ->patchJson('/api/requests/'.$maintenanceRequest->id, ['status' => 'completed'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $maintenanceRequest->update(['status' => 'in_progress']);
+
+        $this->patchJson('/api/requests/'.$maintenanceRequest->id, ['status' => 'completed'])
+            ->assertOk()
+            ->assertJsonPath('request.status', 'completed');
+
+        $this->patchJson('/api/requests/'.$maintenanceRequest->id, ['status' => 'in_progress'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('maintenance_requests', [
+            'id' => $maintenanceRequest->id,
+            'status' => 'completed',
         ]);
     }
 

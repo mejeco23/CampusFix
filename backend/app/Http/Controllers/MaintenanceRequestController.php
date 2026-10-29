@@ -8,7 +8,9 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class MaintenanceRequestController extends Controller
 {
@@ -79,13 +81,37 @@ class MaintenanceRequestController extends Controller
 
     public function updateStatus(Request $request, MaintenanceRequest $maintenanceRequest): JsonResponse
     {
-        abort_unless(in_array($request->user()->role, ['admin', 'maintenance'], true), 403);
+        $role = $request->user()->role;
+        abort_unless(in_array($role, ['admin', 'maintenance'], true), 403);
 
         $validated = $request->validate([
-            'status' => ['required', 'in:pending,in_progress,completed'],
+            'status' => ['required', Rule::in($role === 'admin' ? ['in_progress'] : ['completed'])],
         ]);
 
-        $maintenanceRequest->update($validated);
+        $allowedCurrentStatus = $role === 'admin' ? 'pending' : 'in_progress';
+        $updated = DB::transaction(function () use ($maintenanceRequest, $validated, $allowedCurrentStatus): bool {
+            $lockedRequest = MaintenanceRequest::query()
+                ->whereKey($maintenanceRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedRequest->status !== $allowedCurrentStatus) {
+                return false;
+            }
+
+            $lockedRequest->update(['status' => $validated['status']]);
+            $maintenanceRequest->refresh();
+
+            return true;
+        });
+
+        if (! $updated) {
+            throw ValidationException::withMessages([
+                'status' => $role === 'admin'
+                    ? 'Only pending requests can be verified.'
+                    : 'Only in-progress requests can be marked completed.',
+            ]);
+        }
 
         return response()->json([
             'message' => 'Request status updated.',

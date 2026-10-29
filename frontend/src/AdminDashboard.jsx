@@ -76,7 +76,7 @@ function ReviewAndAssignView() {
           <p>Queue work orders and prioritize campus maintenance requests.</p>
         </div>
       </div>
-      <RequestQueueTable />
+      <RequestQueueTable role="admin" />
     </div>
   )
 }
@@ -170,7 +170,7 @@ function DashboardOverviewView() {
         </section>
       </div>
 
-      <RequestQueueTable title="Recent student requests" perPage={5} />
+      <RequestQueueTable title="Recent student requests" perPage={5} role="admin" />
     </div>
   )
 }

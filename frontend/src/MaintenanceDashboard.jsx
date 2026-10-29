@@ -100,7 +100,7 @@ export default function MaintenanceDashboard({ user, logout }) {
       {view === 'requests' ? (
         <main className="admin-content admin-content--wide">
           <div className="admin-header-row"><div><h2>Work orders</h2><p>Search, filter, and update campus maintenance requests.</p></div></div>
-          <RequestQueueTable title="All campus requests" perPage={10} showFilters />
+          <RequestQueueTable title="All campus requests" perPage={10} showFilters role="maintenance" />
         </main>
       ) : <MaintenanceOverview user={user} setView={setView} />}
     </div>

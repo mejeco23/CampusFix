@@ -5,7 +5,7 @@ function formatDate(value) {
   return value ? new Date(value).toLocaleDateString() : '—'
 }
 
-export default function RequestQueueTable({ title = 'Requests', perPage = 20, showFilters = false }) {
+export default function RequestQueueTable({ title = 'Requests', perPage = 20, showFilters = false, role }) {
   const [requests, setRequests] = useState([])
   const [page, setPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
@@ -59,6 +59,18 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
     }
   }
 
+  function statusAction(request) {
+    if (role === 'admin' && request.status === 'pending') {
+      return { status: 'in_progress', label: 'Verify request' }
+    }
+
+    if (role === 'maintenance' && request.status === 'in_progress') {
+      return { status: 'completed', label: 'Confirm completed' }
+    }
+
+    return null
+  }
+
   function setFilter(key, value) {
     setFilters((current) => ({ ...current, [key]: value }))
     setPage(1)
@@ -102,17 +114,19 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
                 <td>{request.building}, {request.room}</td>
                 <td><span className={`priority-label priority-label--${request.priority}`}>{request.priority}</span></td>
                 <td>
-                  <select
-                    aria-label={`Update status for ${request.title}`}
-                    className="admin-role-select"
-                    disabled={updatingId === request.id}
-                    value={request.status}
-                    onChange={(event) => updateStatus(request.id, event.target.value)}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in_progress">In progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                  <span className={`request-status request-status--${request.status}`}>
+                    {request.status.replaceAll('_', ' ')}
+                  </span>
+                  {statusAction(request) && (
+                    <button
+                      type="button"
+                      className="admin-link-button"
+                      disabled={updatingId === request.id}
+                      onClick={() => updateStatus(request.id, statusAction(request).status)}
+                    >
+                      {updatingId === request.id ? 'Updating…' : statusAction(request).label}
+                    </button>
+                  )}
                 </td>
                 <td>{formatDate(request.created_at)}</td>
               </tr>
