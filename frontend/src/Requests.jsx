@@ -104,13 +104,17 @@ function Requests({ user, logout }) {
                 <h3>Progress</h3>
                 <span className={`request-status request-status--${selectedRequest.status}`}>{displayStatus(selectedRequest.status)}</span>
               </div>
-              <ol className="student-request-progress-steps">
-                {progressSteps.map((step, index) => {
-                  const currentIndex = progressSteps.indexOf(selectedRequest.status)
-                  const stepState = index < currentIndex ? 'complete' : index === currentIndex ? 'current' : 'upcoming'
-                  return <li className={`student-request-progress-step student-request-progress-step--${stepState}`} key={step} aria-current={stepState === 'current' ? 'step' : undefined}><span className="student-request-progress-marker" aria-hidden="true">{stepState === 'complete' ? '✓' : index + 1}</span><span>{displayStatus(step)}</span></li>
-                })}
-              </ol>
+              {selectedRequest.status === 'rejected' ? (
+                <p className="workspace-error" role="status">This request was rejected by an administrator.</p>
+              ) : (
+                <ol className="student-request-progress-steps">
+                  {progressSteps.map((step, index) => {
+                    const currentIndex = progressSteps.indexOf(selectedRequest.status)
+                    const stepState = index < currentIndex ? 'complete' : index === currentIndex ? 'current' : 'upcoming'
+                    return <li className={`student-request-progress-step student-request-progress-step--${stepState}`} key={step} aria-current={stepState === 'current' ? 'step' : undefined}><span className="student-request-progress-marker" aria-hidden="true">{stepState === 'complete' ? '✓' : index + 1}</span><span>{displayStatus(step)}</span></li>
+                  })}
+                </ol>
+              )}
               <p className="student-request-updated">Last updated: {formatDate(selectedRequest.updated_at)}</p>
             </section>
             <dl className="request-detail-fields">

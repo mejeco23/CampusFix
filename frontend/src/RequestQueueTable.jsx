@@ -59,16 +59,19 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
     }
   }
 
-  function statusAction(request) {
+  function statusActions(request) {
     if (role === 'admin' && request.status === 'pending') {
-      return { status: 'in_progress', label: 'Verify request' }
+      return [
+        { status: 'in_progress', label: 'Verify request' },
+        { status: 'rejected', label: 'Reject request' },
+      ]
     }
 
     if (role === 'maintenance' && request.status === 'in_progress') {
-      return { status: 'completed', label: 'Confirm completed' }
+      return [{ status: 'completed', label: 'Confirm completed' }]
     }
 
-    return null
+    return []
   }
 
   function setFilter(key, value) {
@@ -87,6 +90,7 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
             <option value="pending">Pending</option>
             <option value="in_progress">In progress</option>
             <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
           </select>
           <select aria-label="Filter by priority" value={filters.priority} onChange={(event) => setFilter('priority', event.target.value)}>
             <option value="">All priorities</option>
@@ -117,16 +121,17 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
                   <span className={`request-status request-status--${request.status}`}>
                     {request.status.replaceAll('_', ' ')}
                   </span>
-                  {statusAction(request) && (
+                  {statusActions(request).map((action) => (
                     <button
+                      key={action.status}
                       type="button"
                       className="admin-link-button"
                       disabled={updatingId === request.id}
-                      onClick={() => updateStatus(request.id, statusAction(request).status)}
+                      onClick={() => updateStatus(request.id, action.status)}
                     >
-                      {updatingId === request.id ? 'Updating…' : statusAction(request).label}
+                      {updatingId === request.id ? 'Updating…' : action.label}
                     </button>
-                  )}
+                  ))}
                 </td>
                 <td>{formatDate(request.created_at)}</td>
               </tr>

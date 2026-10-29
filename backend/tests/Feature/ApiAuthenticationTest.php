@@ -487,6 +487,54 @@ class ApiAuthenticationTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_reject_pending_request_and_student_and_maintenance_can_see_rejected_status(): void
+    {
+        $student = User::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $maintenance = User::factory()->create(['role' => 'maintenance']);
+        $maintenanceRequest = $student->maintenanceRequests()->create(array_merge(
+            $this->requestAttributes('Broken light'),
+            ['priority' => 'high'],
+        ));
+        $adminToken = $admin->createToken('admin-test')->plainTextToken;
+        $studentToken = $student->createToken('student-test')->plainTextToken;
+        $maintenanceToken = $maintenance->createToken('maintenance-test')->plainTextToken;
+
+        $this->withToken($adminToken)
+            ->patchJson('/api/requests/'.$maintenanceRequest->id, ['status' => 'rejected'])
+            ->assertOk()
+            ->assertJsonPath('request.status', 'rejected');
+
+        $this->withToken($studentToken)
+            ->getJson('/api/requests?status=rejected')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'rejected');
+
+        $this->withToken($maintenanceToken)
+            ->getJson('/api/requests?status=rejected')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'rejected');
+
+        $this->withToken($maintenanceToken)
+            ->getJson('/api/dashboard')
+            ->assertOk()
+            ->assertJsonPath('stats.rejected', 1)
+            ->assertJsonPath('stats.high_priority_open', 0)
+            ->assertJsonCount(0, 'urgent_requests');
+
+        $this->withToken($maintenanceToken)
+            ->patchJson('/api/requests/'.$maintenanceRequest->id, ['status' => 'completed'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('maintenance_requests', [
+            'id' => $maintenanceRequest->id,
+            'status' => 'rejected',
+        ]);
+    }
+
     public function test_maintenance_can_confirm_completion_only_after_admin_verifies_request(): void
     {
         $student = User::factory()->create();

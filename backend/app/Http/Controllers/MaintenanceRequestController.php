@@ -23,12 +23,13 @@ class MaintenanceRequestController extends Controller
             'pending' => (clone $userRequests)->where('status', 'pending')->count(),
             'in_progress' => (clone $userRequests)->where('status', 'in_progress')->count(),
             'completed' => (clone $userRequests)->where('status', 'completed')->count(),
-            'high_priority_open' => (clone $userRequests)->where('priority', 'high')->where('status', '!=', 'completed')->count(),
+            'rejected' => (clone $userRequests)->where('status', 'rejected')->count(),
+            'high_priority_open' => (clone $userRequests)->where('priority', 'high')->whereNotIn('status', ['completed', 'rejected'])->count(),
         ];
         $urgentRequests = (clone $userRequests)
             ->with('user:id,name,email')
             ->where('priority', 'high')
-            ->where('status', '!=', 'completed')
+            ->whereNotIn('status', ['completed', 'rejected'])
             ->latest()
             ->take(5)
             ->get();
@@ -51,7 +52,7 @@ class MaintenanceRequestController extends Controller
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:150'],
-            'status' => ['nullable', 'in:pending,in_progress,completed'],
+            'status' => ['nullable', 'in:pending,in_progress,completed,rejected'],
             'priority' => ['nullable', 'in:low,medium,high'],
         ]);
         $perPage = min(max($request->integer('per_page', 10), 1), 100);
@@ -85,7 +86,7 @@ class MaintenanceRequestController extends Controller
         abort_unless(in_array($role, ['admin', 'maintenance'], true), 403);
 
         $validated = $request->validate([
-            'status' => ['required', Rule::in($role === 'admin' ? ['in_progress'] : ['completed'])],
+            'status' => ['required', Rule::in($role === 'admin' ? ['in_progress', 'rejected'] : ['completed'])],
         ]);
 
         $allowedCurrentStatus = $role === 'admin' ? 'pending' : 'in_progress';
@@ -108,7 +109,7 @@ class MaintenanceRequestController extends Controller
         if (! $updated) {
             throw ValidationException::withMessages([
                 'status' => $role === 'admin'
-                    ? 'Only pending requests can be verified.'
+                    ? 'Only pending requests can be verified or rejected.'
                     : 'Only in-progress requests can be marked completed.',
             ]);
         }

@@ -163,6 +163,7 @@ function DashboardOverviewView() {
               ['Pending', stats.pending],
               ['In progress', stats.in_progress],
               ['Completed', stats.completed],
+              ['Rejected', stats.rejected],
             ].map(([label, count]) => (
               <li key={label}><span>{label}</span><div className="admin-bar-wrap"><span style={{ width: `${stats.total ? (count / stats.total) * 100 : 0}%` }} /></div><strong>{data ? count : '—'}</strong></li>
             ))}

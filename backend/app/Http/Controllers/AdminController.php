@@ -173,6 +173,7 @@ class AdminController extends Controller
             'pending' => (clone $requests)->where('status', 'pending')->count(),
             'in_progress' => (clone $requests)->where('status', 'in_progress')->count(),
             'completed' => (clone $requests)->where('status', 'completed')->count(),
+            'rejected' => (clone $requests)->where('status', 'rejected')->count(),
         ];
         $categories = (clone $requests)
             ->select('category')
