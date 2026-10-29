@@ -14,6 +14,7 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
   const [isLoading, setIsLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState(null)
   const [selectedRequest, setSelectedRequest] = useState(null)
+  const [pendingRejection, setPendingRejection] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -52,23 +53,41 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
       const { data } = await api.patch(`/requests/${requestId}`, { status })
       setRequests((current) => current.map((item) => item.id === requestId ? data.request : item))
       setSelectedRequest((current) => current?.id === requestId ? data.request : current)
+      return true
     } catch {
       setError('Could not update the request status. Please try again.')
+      return false
     } finally {
       setUpdatingId(null)
     }
   }
 
+  async function handleStatusAction(request, status) {
+    if (status === 'rejected') {
+      setPendingRejection(request)
+      return
+    }
+
+    await updateStatus(request.id, status)
+  }
+
+  async function confirmRejection() {
+    if (!pendingRejection) return
+
+    const rejected = await updateStatus(pendingRejection.id, 'rejected')
+    if (rejected) setPendingRejection(null)
+  }
+
   function statusActions(request) {
     if (role === 'admin' && request.status === 'pending') {
       return [
-        { status: 'in_progress', label: 'Verify request' },
-        { status: 'rejected', label: 'Reject request' },
+        { status: 'in_progress', label: 'Verify request', style: 'verify' },
+        { status: 'rejected', label: 'Reject request', style: 'reject' },
       ]
     }
 
     if (role === 'maintenance' && request.status === 'in_progress') {
-      return [{ status: 'completed', label: 'Confirm completed' }]
+      return [{ status: 'completed', label: 'Confirm completed', style: 'complete' }]
     }
 
     return []
@@ -121,17 +140,21 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
                   <span className={`request-status request-status--${request.status}`}>
                     {request.status.replaceAll('_', ' ')}
                   </span>
-                  {statusActions(request).map((action) => (
-                    <button
-                      key={action.status}
-                      type="button"
-                      className="admin-link-button"
-                      disabled={updatingId === request.id}
-                      onClick={() => updateStatus(request.id, action.status)}
-                    >
-                      {updatingId === request.id ? 'Updating…' : action.label}
-                    </button>
-                  ))}
+                  {statusActions(request).length > 0 && (
+                    <div className="request-status-actions">
+                      {statusActions(request).map((action) => (
+                        <button
+                          key={action.status}
+                          type="button"
+                          className={`request-action-button request-action-button--${action.style}`}
+                          disabled={updatingId === request.id}
+                          onClick={() => handleStatusAction(request, action.status)}
+                        >
+                          {updatingId === request.id ? 'Updating…' : action.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </td>
                 <td>{formatDate(request.created_at)}</td>
               </tr>
@@ -185,6 +208,46 @@ export default function RequestQueueTable({ title = 'Requests', perPage = 20, sh
             )}
             <div className="request-detail-actions">
               <button className="admin-button admin-button--primary" type="button" onClick={() => setSelectedRequest(null)}>Close</button>
+            </div>
+          </section>
+        </div>
+      )}
+      {pendingRejection && (
+        <div
+          className="request-detail-backdrop"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && updatingId !== pendingRejection.id) {
+              setPendingRejection(null)
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape' && updatingId !== pendingRejection.id) {
+              setPendingRejection(null)
+            }
+          }}
+        >
+          <section className="request-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="request-reject-title">
+            <span className="request-confirm-icon" aria-hidden="true">!</span>
+            <p className="workspace-eyebrow">REJECT REQUEST</p>
+            <h2 id="request-reject-title">Reject “{pendingRejection.title}”?</h2>
+            <p>The request will be marked Rejected and visible to the student and maintenance staff. This action cannot be undone.</p>
+            <div className="request-confirm-actions">
+              <button
+                type="button"
+                className="request-action-button request-action-button--neutral"
+                disabled={updatingId === pendingRejection.id}
+                onClick={() => setPendingRejection(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="request-action-button request-action-button--reject"
+                disabled={updatingId === pendingRejection.id}
+                onClick={confirmRejection}
+              >
+                {updatingId === pendingRejection.id ? 'Rejecting…' : 'Confirm rejection'}
+              </button>
             </div>
           </section>
         </div>
